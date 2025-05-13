@@ -1,230 +1,182 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/hLqvXyMi)
+# SkiRentals Web App - Portfolio Project
 
-# SkiRentals Web App - Project A-25
+This SkiRentals Web App was created as a team project for CS 3240: "Software Engineering" at the University of Virginia. Our assignment was to build a "Cataloging and Lending App" (CLA) that lets users catalog, share, and lend items. Our team focused on ski and winter sports equipment.
 
-## Latest Updates (March 29, 2024)
+This repository shows my contributions to the project, where I worked as the **Software Architect** and a **main developer**. I led and built major parts of the backend, database design, frontend, and cloud integrations.
 
-### Customized Admin Interface
-We've implemented a fully customized Django admin interface that matches our site's design:
+## My Role and Contributions (ariveram128)
 
-- **Brand-Consistent Styling**: The admin UI now uses our SkiRentals color scheme and typography
-- **Improved UI Elements**: Enhanced forms, buttons, and tables for better usability
-- **Image Thumbnails**: Equipment listings show thumbnail previews directly in admin lists
-- **Custom Login Page**: Distinct admin login page that clearly separates from user authentication
-- **Responsive Design**: Admin interface works well on all screen sizes
-- **S3 Integration**: Admin image uploads work correctly with our S3 storage
+As the **Software Architect** and lead developer, I helped shape the project from start to finish. My work included:
 
-### S3 Integration Complete
-We've successfully implemented AWS S3 for file storage with the following features:
+**1. Architecture Design & Requirements:**
+* Served as the official Software Architect, analyzing requirements and designing solutions
+* Led the implementation of the "Patrons creating public Collections" feature in Sprint 5
+* Designed model changes and guided the team through implementation
 
-- **Profile Pictures**: Users can now upload and update profile pictures
-- **Equipment Images**: Equipment listings support multiple image uploads
-- **Secure Storage**: All images are stored in S3 with proper permissions
+**2. Backend Development & Database:**
+* Set up the core Django app structure and initial database design
+* Built the "Collections" feature from scratch, including public/private collections and access controls
+* Integrated AWS S3 for all image uploads (profile pictures, equipment images)
+* Developed user role management (Patron to Librarian promotion)
+* Implemented seasonal pricing, rental calculations, and fixed related bugs
 
-### Model Improvements
-- Consolidated UserProfile models to fix conflicts
-- Enhanced Equipment model with proper image relationships
-- Added EquipmentImage model for multiple images per equipment item
+**3. Frontend Development:**
+* Built key pages like the homepage, dashboards, equipment catalog, and detail pages
+* Customized all login/signup screens for a consistent look
+* Created dynamic content displays and interactive features
+* Fixed numerous UI bugs and responsive design issues
 
-### UI Enhancements
-- Homepage now displays actual equipment from the database
-- Fixed navigation for different user types (librarian vs patron)
-- Improved equipment catalog display with actual images
-- Enhanced modals and forms for better user experience
+**4. Admin Interface Improvements:**
+* Enhanced the Django admin interface with custom styling
+* Added image thumbnails for equipment listings
+* Created a custom admin login page
+* Set up admin views for core models
 
-### Bug Fixes
-- Resolved issues with multiple file uploads
-- Fixed template inconsistencies
-- Improved modal behavior in the rental management screen
+**5. Testing & DevOps:**
+* Wrote unit tests for features like ski size validation
+* Helped set up the testing infrastructure
+* Configured the app for Heroku deployment and S3 integration
 
-## Frontend Progress (Updated March 10, 2024)
+**6. Project Management:**
+* Participated in team Git workflow
+* Managed and reviewed pull requests
+* Ensured code quality and project goals were met
 
-Latest updates to the frontend:
+## Project Overview
 
-- Created a base template with a responsive navbar and footer
-- Built a modern homepage with hero section and featured equipment
-- Set up the equipment catalog page with cards and filtering
-- Added equipment detail page for individual items
-- Created forms for adding new equipment (admin only)
-- Fixed up the Google OAuth flow with custom templates
-- Implemented dashboards for both patrons and librarians
-- Made a profile page with rental history and settings
-- Added a help page with FAQs
+This app was developed as a "Cataloging and Lending App" to help users catalog items and lend them to others.
 
-All the templates are now properly styled with our color scheme (check out the CSS vars in static/css/main.css). The Google login flow is also working and has a consistent design - no more ugly default pages!
+**Key Terms:**
+* **Items:** Individual things available for borrowing (skis, snowboards, etc.)
+* **Collection:** A group of items based on a theme
+* **Library:** All items within the app
 
-### Login/Authentication
-We're using Django-allauth for Google OAuth. I've customized all the auth-related pages:
-- Login
-- Signup
-- Password reset
-- Google auth screens
+### Core Features
+* **Login:** Google Account login for users
+* **User Types:**
+  * **Visitors:** Can browse but not interact
+  * **Patrons:** Can create accounts, borrow items, rate/comment, and create public collections
+  * **Librarians:** Can manage items and collections, approve/deny borrow requests
+  * **Administrators:** Have access to the Django Admin panel
+* **Equipment Management:** Add, edit, and delete items with details and images
+* **Collections:** Group items by theme (public or private)
+* **Search:** Find items and collections using keywords
+* **Rentals:** Request to borrow items, approve/deny requests, track borrowed items
+* **Reviews:** Rate and comment on items
+* **Cloud Storage:** AWS S3 for all file uploads
+* **Custom Admin:** Themed admin panel for site management
+* **Responsive Design:** Works on different screen sizes
+* **Notifications:** Alerts for rental requests and collection access
 
-The navbar now correctly shows either sign-in or the user dropdown based on authentication state.
-
-### Still To Do
-- Fix a few responsive design issues / Identify what is not working correctly
-- Add placeholder images (the img URLs are set up but we need actual images)
-- Set up the JavaScript for filtering on the equipment page
-- Create the cart functionality
-- Connect the frontend to the backend models
-
-To test it out, just run:
-```bash
-python manage.py runserver
-```
-
-### Sprint 04 Plans (Due March 16)
-For the next sprint, we need to implement AWS S3 for file storage along with other features. Here's what we need to focus on:
-
-1. **Amazon S3 Integration (Required for Sprint 04)**: 
-   - Set up AWS S3 buckets for file storage
-   - Implement user profile picture uploads
-   - Add image upload functionality for equipment items
-   - Create the necessary models and forms for handling file uploads
-
-2. **Backend Connection**: Wire up all the templates to actually work with our models
-   - Connect the equipment catalog to actual database entries
-   - Make user profiles store and display real data
-
-3. **Rental Process**: Implement the full rental flow (browse → add to cart → checkout → confirmation)
-
-4. **Search & Filter**: Get the equipment search/filter functionality working with JavaScript
-
-5. **GitHub Actions CI**: Set up continuous integration with at least a few working tests
-   - Create basic model tests for equipment and user profiles
-   - Add tests for the file upload functionality
-
-6. **Bugfixes**: Address any responsive issues and template bugs from Sprint 03
+### Tech Stack
+* **Backend:** Python 3, Django 5
+* **Frontend:** HTML, CSS, JavaScript
+* **Database:** PostgreSQL (production), SQLite (development)
+* **Login:** Django-allauth with Google OAuth2
+* **File Storage:** Amazon S3
+* **CI/CD:** GitHub Actions
+* **Hosting:** Heroku
 
 ## Admin Interface
 
-The project includes a custom-styled Django admin interface that matches our main site's design while providing powerful management capabilities.
+The project has a customized Django admin interface for site administrators.
 
-### Admin Features
-- **Consistent Branding**: Uses the same colors, fonts, and styles as the main site
-- **Enhanced Equipment Management**: Thumbnail previews, image galleries, and detailed forms
-- **Improved UX**: Better form styling, responsive tables, and intuitive navigation
-- **Clear Admin/User Separation**: Custom login page that clearly indicates admin-only access
-- **Streamlined Workflow**: Optimized for common administrative tasks
+### Features
+* Matches SkiRentals branding (colors and design)
+* Shows image thumbnails in equipment listings
+* Provides user-friendly forms for adding/editing items
+* Includes a custom admin login page
+* Manages all core models (Equipment, Rentals, Reviews, etc.)
 
-### Available Models
-- Equipment: Manage inventory of winter sports equipment (with image uploads)
-- MaintenanceRecord: Track equipment maintenance history
-- Rental: Handle rental transactions
-- Review: Manage customer reviews
-- UserProfile: User management and preferences
-- Collection: Manage equipment groupings (public and private)
-
-### Admin Access
-1. Create a superuser:
-```bash
-python manage.py createsuperuser
-```
-
-2. Run the development server:
-```bash
-python manage.py runserver
-```
-
-3. Access the admin interface at: http://127.0.0.1:8000/admin
-
-### Admin Implementation Details
-The admin customization uses template overrides and custom CSS to provide a consistent look and feel while maintaining full Django admin functionality. Key components:
-
-- `templates/admin/` - Contains template overrides for admin pages
-- `static/admin/css/` - Custom CSS files for admin styling
-- `equipment/admin.py` - Custom AdminSite and model admin classes
+### Access
+1. Create a Django admin user:
+   ```bash
+   python manage.py createsuperuser
+   ```
+2. Go to: `http://127.0.0.1:8000/admin/`
 
 ## Testing
 
-The project includes comprehensive test suites for core functionality. All tests are located in `equipment/tests.py`.
-
-### Current Test Coverage
-
-✅ **Basic Model Testing**
-- Equipment creation and validation
-- Rental transaction management
-- User profile configuration
+The project includes tests for core functions in `equipment/tests.py` and the `tests/` directory.
 
 ### Running Tests
-
 ```bash
-# Run all tests
+# Run all equipment tests
 python manage.py test equipment
 
-# Run specific test class
-python manage.py test equipment.tests.EquipmentTests
-```
+# Run all tests in the tests directory
+python manage.py test tests
 
-### Test Implementation TODO
-
-The following test cases need implementation:
-
-1. **Equipment Management**
-   - [ ] Equipment availability tracking
-   - [ ] Maintenance scheduling
-   - [ ] Rating calculations
-
-2. **Rental Operations**
-   - [ ] Rental extensions
-   - [ ] Late return processing
-   - [ ] Rental history tracking
-
-3. **User Management**
-   - [ ] Equipment recommendations
-   - [ ] Experience level validation
-   - [ ] Rental history association
-
-4. **Review System**
-   - [ ] Review creation and validation
-   - [ ] Rating constraints
-   - [ ] Equipment rating updates
-
-### Contributing Tests
-
-When implementing new tests:
-
-1. Follow existing test patterns in `equipment/tests.py`
-2. Include descriptive docstrings
-3. Test both success and error cases
-4. Run the full test suite before committing
-
-```bash
-# Check test coverage
+# Run with more details
 python manage.py test equipment --verbosity=2
 ```
 
-## Environment Setup
+## Setup & Installation
 
-To run this project locally, you'll need to set up the following environment variables in a `.env` file in the project root:
+To run this project locally:
 
-```
-USE_S3=False
-AWS_ACCESS_KEY_ID=your_access_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_key_here
-AWS_STORAGE_BUCKET_NAME=your_bucket_name
-```
+1. Clone the repository:
+   ```bash
+   git clone git@github.com:ariveram128/ski-rentals-web-app.git
+   cd ski-rentals-web-app
+   ```
 
-Without these properly configured, image uploads will not function correctly.
+2. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   
+   # On Mac/Linux:
+   source venv/bin/activate
+   
+   # On Windows:
+   venv\Scripts\activate
+   ```
 
-### Installation
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. Clone the repository
-2. Create a virtual environment and activate it
-3. Install the dependencies:
-```bash
-pip install -r requirements.txt
-```
-4. Apply migrations:
-```bash
-python manage.py migrate
-```
-5. Create a superuser (for admin access):
-```bash
-python manage.py createsuperuser
-```
-6. Run the development server:
-```bash
-python manage.py runserver
-```
+4. Create a `.env` file with these settings:
+   ```
+   DJANGO_SECRET_KEY='your_secret_key'
+   DEBUG=True
+   
+   # S3 Storage
+   USE_S3=False  # Set to True to use AWS S3
+   AWS_ACCESS_KEY_ID='your_aws_key'
+   AWS_SECRET_ACCESS_KEY='your_aws_secret'
+   AWS_STORAGE_BUCKET_NAME='your_bucket_name'
+   AWS_S3_REGION_NAME='your_region'
+   
+   # Email settings
+   EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+   EMAIL_HOST='smtp.gmail.com'
+   EMAIL_PORT=587
+   EMAIL_USE_TLS=True
+   EMAIL_HOST_USER='your_email@gmail.com'
+   EMAIL_HOST_PASSWORD='your_app_password'
+   DEFAULT_FROM_EMAIL='your_email@gmail.com'
+   ```
+
+5. Apply migrations:
+   ```bash
+   python manage.py migrate
+   ```
+
+6. Create an admin user:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+7. Collect static files:
+   ```bash
+   python manage.py collectstatic --noinput
+   ```
+
+8. Run the server:
+   ```bash
+   python manage.py runserver
+   ```
+
+9. Visit `http://127.0.0.1:8000/` in your browser
