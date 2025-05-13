@@ -1,0 +1,1 @@
+# Image Placeholders\n\nThis directory is for placeholder images. The following images are referenced:\n\n- skis.jpg\n- snowboard.jpg\n- helmet.jpg\n\nCurrently, the templates use onerror to fall back to placeholder.com URLs if these aren't found.

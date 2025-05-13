@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}Edit Profile - SkiRentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3rem 0;
+    }
+    
+    .profile-img-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 2rem;
+    }
+    
+    .profile-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+    }
+    
+    .img-edit-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .img-edit-btn:hover {
+        background-color: var(--accent-color);
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+        border-bottom: 2px solid var(--gray-300);
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .development-notice {
+        background-color: var(--warning-color);
+        color: var(--gray-900);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-2">Edit Your Profile</h1>
+                    <p class="lead mb-0">Update your personal information and preferences</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'patron' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="container my-5">
+        {% if messages %}
+        <div class="row mb-4">
+            <div class="col-12">
+                {% comment %} Keep track of messages we've already displayed {% endcomment %}
+                {% with displayed_messages='' %}
+                    {% for message in messages %}
+                        {% if message.message not in displayed_messages %}
+                            <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                                <i class="{% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}fas fa-check-circle{% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}fas fa-exclamation-circle{% else %}fas fa-info-circle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% with displayed_messages=displayed_messages|add:message.message %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Profile Edit Form -->
+        <div class="row">
+            <div class="col-lg-3 mb-4 mb-lg-0 text-center">
+                <div class="profile-img-container">
+                    {% if user.userprofile.profile_picture %}
+                    <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                    <div class="profile-img d-flex align-items-center justify-content-center bg-light">
+                        <i class="fas fa-user fa-4x text-secondary"></i>
+                    </div>
+                    {% endif %}
+                    <label for="profilePictureInput" class="img-edit-btn">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                </div>
+                <h4>{{ request.user.get_full_name|default:request.user.username }}</h4>
+                <p class="text-muted mb-4">Member since {{ request.user.date_joined|date:"F j, Y" }}</p>
+                
+                <div class="list-group mb-4">
+                    <a href="#personal" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-user me-2"></i>Personal Information
+                    </a>
+                    <a href="#skiing" class="list-group-item list-group-item-action">
+                        <i class="fas fa-skiing me-2"></i>Skiing Details
+                    </a>
+                    <a href="#preferences" class="list-group-item list-group-item-action">
+                        <i class="fas fa-sliders-h me-2"></i>Preferences
+                    </a>
+                    <a href="#account" class="list-group-item list-group-item-action">
+                        <i class="fas fa-lock me-2"></i>Account Settings
+                    </a>
+                </div>
+                
+                <button class="btn btn-danger w-100" type="button">
+                    <i class="fas fa-user-times me-1"></i> Delete Account
+                </button>
+            </div>
+            
+            <div class="col-lg-9">
+                <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- Hidden file input for profile picture -->
+                    <input type="file" id="profilePictureInput" name="profilePicture" accept="image/*" style="display: none;">
+                    <!-- Personal Information Section -->
+                    <div class="form-section" id="personal">
+                        <h3 class="section-title">Personal Information</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="{{ request.user.first_name }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="{{ request.user.last_name }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" value="{{ request.user.email }}" disabled>
+                                <div class="form-text">Email address cannot be changed (managed by Google).</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="(555) 555-5555" value="{{ profile.phone_number }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" name="address" placeholder="Street address" value="{{ street_address }}">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-5">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="city" value="{{ city }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="state" class="form-label">State</label>
+                                <select class="form-select" id="state" name="state">
+                                    <option value="">Choose...</option>
+                                    {% for state_code, state_name in states %}
+                                    <option value="{{ state_code }}" {% if state == state_code %}selected{% endif %}>{{ state_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="zipCode" class="form-label">Zip Code</label>
+                                <input type="text" class="form-control" id="zipCode" name="zipCode" value="{{ zipcode }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skiing Details Section -->
+                    <div class="form-section" id="skiing">
+                        <h3 class="section-title">Skiing/Snowboarding Details</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="height" class="form-label">Height</label>
+                                <input type="text" class="form-control" id="height" name="height" placeholder="e.g. 5'10&quot; or 178cm" value="{{ profile.height }}">
+                                <div class="form-text">Used for equipment recommendations</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="weight" class="form-label">Weight</label>
+                                <input type="text" class="form-control" id="weight" name="weight" placeholder="e.g. 170lbs or 77kg" value="{{ profile.weight }}">
+                                <div class="form-text">Used for binding settings</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="bootSize" class="form-label">Boot Size</label>
+                                <input type="text" class="form-control" id="bootSize" name="bootSize" placeholder="e.g. US 10 or EU 43" value="{{ profile.boot_size }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="experienceLevel" class="form-label">Experience Level</label>
+                                <select class="form-select" id="experienceLevel" name="experienceLevel">
+                                    <option value="">Select...</option>
+                                    <option value="BEGINNER" {% if profile.experience_level == 'BEGINNER' %}selected{% endif %}>Beginner (1st time to few days)</option>
+                                    <option value="INTERMEDIATE" {% if profile.experience_level == 'INTERMEDIATE' %}selected{% endif %}>Intermediate (Can use blue runs)</option>
+                                    <option value="ADVANCED" {% if profile.experience_level == 'ADVANCED' %}selected{% endif %}>Advanced (Comfortable on black runs)</option>
+                                    <option value="EXPERT" {% if profile.experience_level == 'EXPERT' %}selected{% endif %}>Expert (Double black diamonds)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="preferredActivity" class="form-label">Preferred Activity</label>
+                                <select class="form-select" id="preferredActivity" name="preferredActivity">
+                                    <option value="">Select...</option>
+                                    <option value="SKIING" {% if profile.preferred_activity == 'SKIING' %}selected{% endif %}>Skiing</option>
+                                    <option value="SNOWBOARDING" {% if profile.preferred_activity == 'SNOWBOARDING' %}selected{% endif %}>Snowboarding</option>
+                                    <option value="BOTH" {% if profile.preferred_activity == 'BOTH' %}selected{% endif %}>Both</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="preferredTerrain" class="form-label">Preferred Terrain</label>
+                                <select class="form-select" id="preferredTerrain" name="preferredTerrain">
+                                    <option value="">Select...</option>
+                                    <option value="GROOMED" {% if profile.preferred_terrain == 'GROOMED' %}selected{% endif %}>Groomed runs</option>
+                                    <option value="POWDER" {% if profile.preferred_terrain == 'POWDER' %}selected{% endif %}>Powder</option>
+                                    <option value="PARK" {% if profile.preferred_terrain == 'PARK' %}selected{% endif %}>Park and pipe</option>
+                                    <option value="ALLMOUNTAIN" {% if profile.preferred_terrain == 'ALLMOUNTAIN' %}selected{% endif %}>All-mountain</option>
+                                    <option value="BACKCOUNTRY" {% if profile.preferred_terrain == 'BACKCOUNTRY' %}selected{% endif %}>Backcountry</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preferences Section -->
+                    <div class="form-section" id="preferences">
+                        <h3 class="section-title">Rental Preferences</h3>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="preferredRental" class="form-label">Preferred Rental Duration</label>
+                                <select class="form-select" id="preferredRental" name="preferredRental">
+                                    <option value="">Select...</option>
+                                    <option value="DAILY" {% if profile.preferred_rental_duration == 'DAILY' %}selected{% endif %}>Daily</option>
+                                    <option value="WEEKLY" {% if profile.preferred_rental_duration == 'WEEKLY' %}selected{% endif %}>Weekly</option>
+                                    <option value="SEASONAL" {% if profile.preferred_rental_duration == 'SEASONAL' %}selected{% endif %}>Seasonal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="insurancePreference" class="form-label">Insurance Preference</label>
+                                <select class="form-select" id="insurancePreference" name="insurancePreference">
+                                    <option value="">Select...</option>
+                                    <option value="ALWAYS" {% if profile.insurance_preference == 'ALWAYS' %}selected{% endif %}>Always add insurance</option>
+                                    <option value="ASK" {% if profile.insurance_preference == 'ASK' or not profile.insurance_preference %}selected{% endif %}>Ask each time</option>
+                                    <option value="NEVER" {% if profile.insurance_preference == 'NEVER' %}selected{% endif %}>Never add insurance</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label d-block">Notification Preferences</label>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="emailRentalReminders" name="emailRentalReminders" {% if profile.receive_email_reminders %}checked{% endif %}>
+                                <label class="form-check-label" for="emailRentalReminders">Email rental reminders</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="textRentalReminders" name="textRentalReminders" {% if profile.receive_sms_reminders %}checked{% endif %}>
+                                <label class="form-check-label" for="textRentalReminders">Text message rental reminders</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="marketingEmails" name="marketingEmails" {% if profile.receive_marketing_emails %}checked{% endif %}>
+                                <label class="form-check-label" for="marketingEmails">Marketing emails and special offers</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Settings Section -->
+                    <div class="form-section" id="account">
+                        <h3 class="section-title">Account Settings</h3>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Your account is managed through Google. Some settings may need to be changed through your Google account.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label d-block">Privacy Settings</label>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="publicProfile" name="publicProfile" {% if profile.is_public_profile %}checked{% endif %}>
+                                <label class="form-check-label" for="publicProfile">Make my profile visible to others</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="showRentals" name="showRentals" {% if profile.show_rental_history %}checked{% endif %}>
+                                <label class="form-check-label" for="showRentals">Show my rental history in my public profile</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Connected Accounts</label>
+                            {% get_social_accounts request.user as accounts %}
+                            {% if accounts.google %}
+                            <div class="d-flex align-items-center p-3 border rounded mb-2">
+                                <i class="fab fa-google text-primary me-3 fa-2x"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">Google</h6>
+                                    <small class="text-muted">Connected as {{ request.user.email }}</small>
+                                </div>
+                                <span class="badge bg-success">Connected</span>
+                            </div>
+                            {% else %}
+                            <div class="d-flex align-items-center p-3 border rounded mb-2">
+                                <i class="fab fa-google text-primary me-3 fa-2x"></i>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">Google</h6>
+                                    <small class="text-muted">Not connected</small>
+                                </div>
+                                <a href="{% provider_login_url 'google' process='connect' %}" class="btn btn-sm btn-outline-primary">Connect</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Save Button -->
+                    <div class="d-flex justify-content-end mb-5">
+                        <a href="{% url 'patron' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profile picture preview and upload
+        const profilePictureInput = document.getElementById('profilePictureInput');
+        const profileImg = document.querySelector('.profile-img');
+        
+        if (profilePictureInput && profileImg) {
+            // Add click handler to the edit button/label
+            document.querySelector('.img-edit-btn').addEventListener('click', function() {
+                profilePictureInput.click();
+            });
+            
+            // Handle file selection
+            profilePictureInput.addEventListener('change', function(event) {
+                if (this.files && this.files[0]) {
+                    // First, log to make sure this event is firing
+                    console.log('File selected:', this.files[0].name);
+                    
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        // Check if profile-img is an img element or a div (for the icon fallback)
+                        if (profileImg.tagName === 'IMG') {
+                            profileImg.src = e.target.result;
+                        } else {
+                            // If it's the div with the icon, replace it with an img
+                            const parent = profileImg.parentNode;
+                            const newImg = document.createElement('img');
+                            newImg.src = e.target.result;
+                            newImg.className = 'profile-img';
+                            newImg.alt = 'Profile Image';
+                            parent.replaceChild(newImg, profileImg);
+                        }
+                    };
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        } else {
+            console.error('Profile picture elements not found');
+        }
+        
+        // Smooth scroll to sections
+        const sectionLinks = document.querySelectorAll('.list-group-item');
+        
+        sectionLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active state
+                sectionLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Scroll to section
+                const targetId = this.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                
+                window.scrollTo({
+                    top: targetSection.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

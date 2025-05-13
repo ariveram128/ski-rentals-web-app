@@ -1,0 +1,170 @@
+/* SkiRentals Admin - Custom Styles */
+
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #1a2980;      /* Deep blue - sky/winter */
+  --secondary-color: #ffffff;    /* Crisp white - snow */
+  --accent-color: #ff7e5f;       /* Bright orange - call-to-action */
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+  --success-color: #28a745;
+  --info-color: #17a2b8;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+}
+
+/* Basic styling */
+body {
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--gray-800);
+  background-color: var(--gray-100);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+/* Header styling */
+#header {
+  background-color: var(--primary-color);
+  color: white;
+  height: auto;
+  padding: 15px 40px;
+}
+
+#branding h1 {
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+}
+
+#branding h1 a {
+  color: white;
+  text-decoration: none;
+}
+
+/* Module styling */
+.module h2, .module caption, .inline-group h2 {
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 15px;
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Button styling to match Bootstrap */
+.submit-row input, input[type=submit].default {
+  background: var(--primary-color);
+  border-radius: 4px;
+  border: none;
+  padding: 10px 15px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  background: var(--gray-600);
+  border-radius: 4px;
+  border: none;
+  padding: 8px 15px;
+  color: white;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+  background: var(--accent-color);
+}
+
+.button.default, input[type=submit].default {
+  background: var(--primary-color);
+}
+
+.button.default:hover, input[type=submit].default:hover {
+  background: var(--accent-color);
+}
+
+/* Form styling */
+.form-row {
+  padding: 10px 0;
+}
+
+input, textarea, select, .form-row p, form .button {
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.form-row label {
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+/* Link colors */
+a:link, a:visited {
+  color: var(--primary-color);
+}
+
+a:hover {
+  color: var(--accent-color);
+}
+
+/* Table styling */
+#changelist table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#changelist table thead th {
+  background: var(--gray-200);
+  padding: 10px;
+  border-bottom: 2px solid var(--gray-300);
+  font-weight: 600;
+}
+
+#changelist table tbody td {
+  padding: 10px;
+  border-bottom: 1px solid var(--gray-300);
+}
+
+#changelist table tbody tr:hover {
+  background-color: var(--gray-100);
+}
+
+/* Make thumbnails look nice */
+.field-image_thumbnail img {
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive footer */
+.footer {
+  margin-top: 30px;
+  padding: 20px 0;
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+}
+
+/* Responsive fixes */
+@media (max-width: 767px) {
+  #header {
+    padding: 15px 20px;
+  }
+  
+  .form-row {
+    padding: 8px 0;
+  }
+  
+  #changelist-filter {
+    width: 100%;
+    float: none;
+  }
+} 

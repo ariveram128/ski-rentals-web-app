@@ -1,0 +1,67 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .field-image_thumbnail img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #changelist-filter h2 {
+        background-color: var(--primary-color);
+        color: white;
+        font-family: 'Montserrat', sans-serif;
+    }
+    
+    #changelist .actions {
+        padding: 12px;
+        background: var(--gray-100);
+        border-radius: 4px;
+    }
+    
+    #changelist-search input[type="text"] {
+        border: 1px solid var(--gray-300);
+        border-radius: 4px;
+        padding: 8px 10px;
+    }
+    
+    #changelist-search #searchbar {
+        box-shadow: none;
+    }
+    
+    #toolbar form input[type="submit"] {
+        background-color: var(--primary-color);
+        border-radius: 4px;
+        color: white;
+        padding: 8px 15px;
+        transition: background-color 0.2s;
+    }
+    
+    #toolbar form input[type="submit"]:hover {
+        background-color: var(--accent-color);
+    }
+    
+    .paginator {
+        padding: 15px 0;
+        font-family: 'Open Sans', sans-serif;
+    }
+    
+    .paginator a:link, .paginator a:visited {
+        padding: 5px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--gray-300);
+    }
+    
+    .paginator a.showall {
+        background: var(--gray-100);
+    }
+</style>
+{% endblock %}
+
+{% block result_list %}
+    {{ block.super }}
+{% endblock %} 

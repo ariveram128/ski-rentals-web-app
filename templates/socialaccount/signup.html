@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}Complete Your Profile - SkiRentals{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white p-4 text-center">
+                    <h2 class="mb-0">Complete Your Profile</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="py-3">
+                        <p class="lead mb-4 text-center">You are about to use your Google account to login to SkiRentals. As a final step, please complete the following form:</p>
+                        
+                        <form method="post" action="{% url 'socialaccount_signup' %}">
+                            {% csrf_token %}
+                            
+                            {% if form.errors %}
+                            <div class="alert alert-danger mb-4">
+                                {% for field in form %}
+                                    {% if field.errors %}
+                                        <p><strong>{{ field.label }}:</strong> {{ field.errors.0 }}</p>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if form.non_field_errors %}
+                                    {% for error in form.non_field_errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">Username</label>
+                                {{ form.username }}
+                                <div class="form-text">The username you'll use to login to SkiRentals</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_email" class="form-label">Email (optional)</label>
+                                {{ form.email }}
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check-circle me-2"></i>Complete Signup
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap styles to form elements
+        document.querySelectorAll('input').forEach(function(input) {
+            input.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %} 

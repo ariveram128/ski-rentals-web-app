@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Equipment Catalog - SkiRentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .equipment-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3rem 0;
+    }
+    
+    .filter-section {
+        background-color: var(--gray-100);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+    }
+    
+    .equipment-card {
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .equipment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .recommendations-section {
+        background-color: var(--accent-color-light);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rec-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Equipment Header -->
+    <section class="equipment-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-2">Equipment Catalog</h1>
+                    <p class="lead mb-0">Browse our high-quality skis, snowboards, and accessories</p>
+                </div>
+                <div class="col-md-6">
+                    <form class="d-flex">
+                        <input class="form-control me-2" type="search" placeholder="Search for equipment..." name="search" value="{{ request.GET.search|default:'' }}">
+                        <button class="btn btn-light" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="container py-5">
+        <!-- User Recommendations Section -->
+        {% if user.is_authenticated and has_complete_profile %}
+        <div class="recommendations-section mb-4">
+            <div class="row mb-3">
+                <div class="col">
+                    <h3><i class="fas fa-thumbs-up me-2"></i>Recommended For You</h3>
+                    <p class="mb-0">Based on your profile and preferences, we've selected these items for you!</p>
+                    {% if not user_profile.experience_level or not user_profile.preferred_activity %}
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>Complete your <a href="{% url 'edit_profile' %}">profile</a> to get personalized recommendations.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if ski_recommendations or board_recommendations or boot_recommendations %}
+            <div class="row">
+                {% if ski_recommendations %}
+                    {% for ski in ski_recommendations %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card equipment-card h-100">
+                            <span class="badge bg-success rec-badge">Recommended</span>
+                            <div class="card-body text-center">
+                                <i class="fas fa-skiing fa-3x text-primary mb-3"></i>
+                                <h5>{{ ski.brand }} {{ ski.model }}</h5>
+                                <p class="text-muted">{{ ski.size }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-info">{{ ski.get_recommended_skill_level_display }}</span>
+                                    <span class="text-primary">${{ ski.rental_price }}/day</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'equipment:detail' ski.id %}" class="btn btn-outline-primary">View Details</a>
+                                    <a href="{% url 'equipment:quick_rent' ski.id %}" class="btn btn-primary">Quick Rent</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if board_recommendations %}
+                    {% for board in board_recommendations %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card equipment-card h-100">
+                            <span class="badge bg-success rec-badge">Recommended</span>
+                            <div class="card-body text-center">
+                                <i class="fas fa-snowboarding fa-3x text-primary mb-3"></i>
+                                <h5>{{ board.brand }} {{ board.model }}</h5>
+                                <p class="text-muted">{{ board.size }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-info">{{ board.get_recommended_skill_level_display }}</span>
+                                    <span class="text-primary">${{ board.rental_price }}/day</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'equipment:detail' board.id %}" class="btn btn-outline-primary">View Details</a>
+                                    <a href="{% url 'equipment:quick_rent' board.id %}" class="btn btn-primary">Quick Rent</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if boot_recommendations %}
+                    {% for boot in boot_recommendations %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card equipment-card h-100">
+                            <span class="badge bg-success rec-badge">Perfect Fit</span>
+                            <div class="card-body text-center">
+                                <i class="fas fa-shoe-prints fa-3x text-primary mb-3"></i>
+                                <h5>{{ boot.brand }} {{ boot.model }}</h5>
+                                <p class="text-muted">Size {{ boot.size }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-secondary">Boots</span>
+                                    <span class="text-primary">${{ boot.rental_price }}/day</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'equipment:detail' boot.id %}" class="btn btn-outline-primary">View Details</a>
+                                    <a href="{% url 'equipment:quick_rent' boot.id %}" class="btn btn-primary">Quick Rent</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            {% endfor %}
+                {% endif %}
+            </div>
+            
+            <div class="text-center mt-2">
+                <a href="{% url 'profile' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-user-cog me-2"></i>Update Your Preferences
+                </a>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>We're preparing your recommendations based on your preferences.
+                <a href="{% url 'edit_profile' %}">Update your profile</a> with more details for better recommendations.
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Main Equipment List -->
+        <div class="row">
+            <!-- Filters Column -->
+            <div class="col-lg-3 mb-4">
+                <div class="filter-section">
+                    <h4 class="mb-3">Filters</h4>
+                    <form method="get">
+                        <div class="mb-3">
+                            <label class="form-label">Equipment Type</label>
+                            <select class="form-select" name="type">
+                                <option value="all">All Types</option>
+                                <option value="SKI" {% if request.GET.type == 'SKI' %}selected{% endif %}>Skis</option>
+                                <option value="SNOWBOARD" {% if request.GET.type == 'SNOWBOARD' %}selected{% endif %}>Snowboards</option>
+                                <option value="POLES" {% if request.GET.type == 'POLES' %}selected{% endif %}>Ski Poles</option>
+                                <option value="BOOTS" {% if request.GET.type == 'BOOTS' %}selected{% endif %}>Boots</option>
+                                <option value="HELMET" {% if request.GET.type == 'HELMET' %}selected{% endif %}>Helmets</option>
+                                <option value="GOGGLES" {% if request.GET.type == 'GOGGLES' %}selected{% endif %}>Goggles</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Skill Level</label>
+                            <select class="form-select" name="skill_level">
+                                <option value="all">All Levels</option>
+                                <option value="BEGINNER" {% if request.GET.skill_level == 'BEGINNER' %}selected{% endif %}>Beginner</option>
+                                <option value="INTERMEDIATE" {% if request.GET.skill_level == 'INTERMEDIATE' %}selected{% endif %}>Intermediate</option>
+                                <option value="ADVANCED" {% if request.GET.skill_level == 'ADVANCED' %}selected{% endif %}>Advanced</option>
+                                <option value="EXPERT" {% if request.GET.skill_level == 'EXPERT' %}selected{% endif %}>Expert</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Max Price per Day</label>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">$0</span>
+                                <input type="range" class="form-range" min="0" max="100" step="5" name="price" value="{{ request.GET.price|default:'100' }}">
+                                <span class="ms-2">$100+</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="availableOnly" name="available_only" value="true" {% if request.GET.available_only == 'true' %}checked{% endif %}>
+                            <label class="form-check-label" for="availableOnly">Available Items Only</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            <a href="{% url 'equipment:index' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Equipment Cards Column -->
+            <div class="col-lg-9">
+                {% if equipment_list %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for equipment in equipment_list %}
+                    <div class="col">
+                        <div class="card equipment-card h-100">
+                            <div class="card-body text-center">
+                                {% if equipment.equipment_type == 'SKI' %}
+                                <i class="fas fa-skiing fa-3x text-primary mb-3"></i>
+                                {% elif equipment.equipment_type == 'SNOWBOARD' %}
+                                <i class="fas fa-snowboarding fa-3x text-primary mb-3"></i>
+                                {% elif equipment.equipment_type == 'POLES' %}
+                                <i class="fas fa-grip-lines-vertical fa-3x text-primary mb-3"></i>
+                                {% elif equipment.equipment_type == 'BOOTS' %}
+                                <i class="fas fa-shoe-prints fa-3x text-primary mb-3"></i>
+                                {% elif equipment.equipment_type == 'HELMET' %}
+                                <i class="fas fa-hard-hat fa-3x text-primary mb-3"></i>
+                                {% elif equipment.equipment_type == 'GOGGLES' %}
+                                <i class="fas fa-glasses fa-3x text-primary mb-3"></i>
+                                {% else %}
+                                <i class="fas fa-snowflake fa-3x text-primary mb-3"></i>
+                                {% endif %}
+                                
+                                <h5>{{ equipment.brand }} {{ equipment.model }}</h5>
+                                <p class="text-muted">{{ equipment.size }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge {% if equipment.condition == 'NEW' %}bg-success{% elif equipment.condition == 'EXCELLENT' %}bg-info{% elif equipment.condition == 'GOOD' %}bg-primary{% elif equipment.condition == 'FAIR' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ equipment.get_condition_display }}
+                                    </span>
+                                    <span class="text-primary">${{ equipment.rental_price }}/day</span>
+                                </div>
+                                
+                                {% if equipment.recommended_skill_level %}
+                                <p class="small text-muted mb-3">
+                                    Recommended for {{ equipment.get_recommended_skill_level_display }} skiers
+                                </p>
+    {% endif %}
+                                
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'equipment:detail' equipment.id %}" class="btn btn-outline-primary">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>No equipment found matching your criteria. Try adjusting your filters.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Add New Equipment - SkiRentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background-color: var(--gray-100);
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .form-section h4 {
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 0.5rem;
+    }
+    
+    .required-field label:after {
+        content: "*";
+        color: var(--danger-color);
+        margin-left: 0.25rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(26, 41, 128, 0.25);
+    }
+
+    /* Add these styles to ensure proper appearance of form fields */
+    textarea, select, input[type="text"], input[type="number"], input[type="email"], input[type="date"] {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: var(--gray-900);
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid var(--gray-400);
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    
+    select {
+        appearance: auto;
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+    
+    /* Error styling */
+    .errorlist {
+        color: var(--danger-color);
+        list-style-type: none;
+        padding-left: 0;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Add Equipment Header -->
+    <section class="bg-primary text-white py-4 mb-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1>Add New Equipment</h1>
+                    <p class="lead mb-0">Add new equipment to the rental inventory</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'equipment:index' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Equipment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Equipment Form -->
+    <section class="container mb-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-info-circle me-2"></i>Basic Information</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.equipment_id.id_for_label }}" class="form-label">Equipment ID</label>
+                                {{ form.equipment_id.errors }}
+                                {{ form.equipment_id }}
+                                <div class="form-text">Unique identifier for the equipment (e.g., SKI-001, BOARD-002)</div>
+                            </div>
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.equipment_type.id_for_label }}" class="form-label">Equipment Type</label>
+                                {{ form.equipment_type.errors }}
+                                {{ form.equipment_type }}
+                            </div>
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.brand.id_for_label }}" class="form-label">Brand</label>
+                                {{ form.brand.errors }}
+                                {{ form.brand }}
+                            </div>
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.model.id_for_label }}" class="form-label">Model</label>
+                                {{ form.model.errors }}
+                                {{ form.model }}
+                            </div>
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.size.id_for_label }}" class="form-label">Size</label>
+                                {{ form.size.errors }}
+                                {{ form.size }}
+                            </div>
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.condition.id_for_label }}" class="form-label">Condition</label>
+                                {{ form.condition.errors }}
+                                {{ form.condition }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Details -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-sliders-h me-2"></i>Additional Details</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                                {{ form.location.errors }}
+                                {{ form.location }}
+                                <div class="form-text">Where the equipment is stored</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.recommended_skill_level.id_for_label }}" class="form-label">Recommended Skill Level</label>
+                                {{ form.recommended_skill_level.errors }}
+                                {{ form.recommended_skill_level }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.recommended_height_range.id_for_label }}" class="form-label">Recommended Height Range</label>
+                                {{ form.recommended_height_range.errors }}
+                                {{ form.recommended_height_range }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.next_maintenance_due.id_for_label }}" class="form-label">Next Maintenance Due</label>
+                                {{ form.next_maintenance_due.errors }}
+                                {{ form.next_maintenance_due }}
+                            </div>
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {{ form.notes.errors }}
+                                {{ form.notes }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pricing & Availability -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-tag me-2"></i>Pricing & Availability</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6 required-field">
+                                <label for="{{ form.rental_price.id_for_label }}" class="form-label">Daily Rate</label>
+                                {{ form.rental_price.errors }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <div class="flex-grow-1">{{ form.rental_price }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.hourly_rate.id_for_label }}" class="form-label">Hourly Rate</label>
+                                {{ form.hourly_rate.errors }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <div class="flex-grow-1">{{ form.hourly_rate }}</div>
+                                </div>
+                                <div class="form-text">Optional: Defaults to 1/8 of daily rate if not set</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.weekly_rate.id_for_label }}" class="form-label">Weekly Rate</label>
+                                {{ form.weekly_rate.errors }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <div class="flex-grow-1">{{ form.weekly_rate }}</div>
+                                </div>
+                                <div class="form-text">Optional: Defaults to 5x daily rate if not set</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.seasonal_rate.id_for_label }}" class="form-label">Seasonal Rate</label>
+                                {{ form.seasonal_rate.errors }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <div class="flex-grow-1">{{ form.seasonal_rate }}</div>
+                                </div>
+                                <div class="form-text">Optional: Defaults to 30x daily rate if not set</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.rent_to_own_price.id_for_label }}" class="form-label">Rent-to-Own Price</label>
+                                {{ form.rent_to_own_price.errors }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <div class="flex-grow-1">{{ form.rent_to_own_price }}</div>
+                                </div>
+                                <div class="form-text">Optional: Set if equipment can be purchased</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    {{ form.is_available }}
+                                    <label class="form-check-label" for="{{ form.is_available.id_for_label }}">
+                                        Available for Rental
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'equipment:index' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save Equipment
+                        </button>
+                    </div>
+    </form>
+            </div>
+        </div>
+    </section>
+    
+    <div class="container mb-5">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i> <strong>Note:</strong> Image upload functionality will be available in the next version. In Sprint 4, we'll be implementing Amazon S3 for file storage.
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Bootstrap classes to form fields
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add classes to input fields
+        document.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], input[type="date"]').forEach(function(input) {
+            input.classList.add('form-control');
+        });
+        
+        // Add classes to select fields
+        document.querySelectorAll('select').forEach(function(select) {
+            select.classList.add('form-select');
+        });
+        
+        // Add classes to textareas
+        document.querySelectorAll('textarea').forEach(function(textarea) {
+            textarea.classList.add('form-control');
+            if (!textarea.getAttribute('rows')) {
+                textarea.setAttribute('rows', '4');
+            }
+        });
+        
+        // Add classes to checkbox inputs
+        document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.classList.add('form-check-input');
+        });
+        
+        // Add placeholders to specific fields
+        const placeholders = {
+            'id_equipment_id': 'Enter a unique identifier (e.g., SKI-001)',
+            'id_brand': 'Enter the equipment brand',
+            'id_model': 'Enter the equipment model',
+            'id_size': 'Enter the size (e.g., 170cm, L, 42)',
+            'id_location': 'Enter the storage location',
+            'id_recommended_height_range': 'e.g., 160-175cm',
+            'id_notes': 'Any additional information about this equipment',
+            'id_rental_price': '0.00',
+            'id_rent_to_own_price': '0.00'
+        };
+        
+        for (const [id, placeholder] of Object.entries(placeholders)) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.setAttribute('placeholder', placeholder);
+            }
+        }
+    });
+</script>
+{% endblock %}

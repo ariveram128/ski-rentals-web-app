@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Collection Access | SkiRentals{% endblock %}
+
+{% block content %}
+    <section class="py-5 bg-primary text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="display-4">Manage Access</h1>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0"><i class="fas fa-users me-2"></i>Manage Collection Access</h4>
+                            <a href="{% url 'equipment:collection_detail' collection.id %}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Collection
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ collection.title }}</h5>
+                            <p class="text-muted">
+                                {% if collection.sharing_type == 'PRIVATE' %}
+                                    <span class="badge bg-danger"><i class="fas fa-lock me-1"></i> Private</span>
+                                {% else %}
+                                    <span class="badge bg-primary"><i class="fas fa-user-friends me-1"></i> Shared</span>
+                                {% endif %}
+                            </p>
+                            
+                            <!-- Access Requests Section -->
+                            {% if pending_requests %}
+                                <h5 class="mt-4 mb-3"><i class="fas fa-bell me-2"></i>Pending Access Requests</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Date Requested</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for request in pending_requests %}
+                                                <tr>
+                                                    <td>{{ request.user.username }}</td>
+                                                    <td>{{ request.request_date|date:"F d, Y" }}</td>
+                                                    <td>
+                                                        <div class="btn-group" role="group">
+                                                            <button type="button" class="btn btn-success btn-sm approve-btn" data-request-id="{{ request.id }}">
+                                                                <i class="fas fa-check me-1"></i> Approve
+                                                            </button>
+                                                            <button type="button" class="btn btn-danger btn-sm deny-btn" data-request-id="{{ request.id }}">
+                                                                <i class="fas fa-times me-1"></i> Deny
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Users with Access Section -->
+                            <h5 class="mt-4 mb-3"><i class="fas fa-user-check me-2"></i>Users with Access</h5>
+                            
+                            {% if authorized_users %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for user in authorized_users %}
+                                                <tr>
+                                                    <td>{{ user.username }}</td>
+                                                    <td>
+                                                        <form method="post" class="d-inline">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="action" value="remove">
+                                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                                <i class="fas fa-user-minus me-1"></i> Remove Access
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i> No users currently have access to this collection.
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Add User Form -->
+                            <div class="card mt-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Add User</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if messages %}
+                                        {% for message in messages %}
+                                            {% if 'does not exist' in message.message or 'already has access' in message.message or 'cannot add yourself' in message.message %}
+                                                <div class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none;" id="error-alert" data-error-message="{{ message }}">
+                                                    <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
+                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    <form method="post" class="row g-3" id="add-user-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="add">
+                                        
+                                        <div class="col-md-8">
+                                            <label for="username" class="form-label">Username</label>
+                                            <input type="text" class="form-control" id="username" name="username" required>
+                                            <div class="form-text">Enter the exact username of the person you want to grant access to.</div>
+                                        </div>
+                                        
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-user-plus me-1"></i> Grant Access
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="approveModalLabel">Approve Access Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to approve this access request?</p>
+                    <form id="approveForm" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="approveNote" class="form-label">Note (optional):</label>
+                            <textarea class="form-control" id="approveNote" name="note" rows="3" placeholder="Add an optional note for this approval"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmApprove">Approve Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deny Modal -->
+    <div class="modal fade" id="denyModal" tabindex="-1" aria-labelledby="denyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="denyModalLabel">Deny Access Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to deny this access request?</p>
+                    <form id="denyForm" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="denyNote" class="form-label">Reason for denial (optional):</label>
+                            <textarea class="form-control" id="denyNote" name="note" rows="3" placeholder="Add an optional reason for denying this request"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeny">Deny Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="errorModalLabel"><i class="fas fa-exclamation-triangle me-2"></i><span id="error-title">Error</span></h5>
+                    <button type="button" class="btn-close btn-close-white" id="error-close-button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i id="error-icon" class="fas fa-user-slash text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <p class="text-center fs-5 fw-bold" id="error-title-display">User Not Found</p>
+                    <p class="text-center" id="error-message">The username you entered does not exist in the system.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="error-ok-button" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for error messages and show modal
+            const errorAlert = document.getElementById('error-alert');
+            if (errorAlert) {
+                const errorMessage = errorAlert.getAttribute('data-error-message');
+                const errorModalElement = document.getElementById('errorModal');
+                const errorModal = new bootstrap.Modal(errorModalElement);
+                
+                // Set the error message
+                document.getElementById('error-message').textContent = errorMessage;
+                
+                // Customize modal based on error type
+                const errorTitle = document.getElementById('error-title');
+                const errorTitleDisplay = document.getElementById('error-title-display');
+                const errorIcon = document.getElementById('error-icon');
+                
+                if (errorMessage.includes('does not exist')) {
+                    errorTitle.textContent = 'User Not Found';
+                    errorTitleDisplay.textContent = 'User Not Found';
+                    errorIcon.className = 'fas fa-user-slash text-danger';
+                } else if (errorMessage.includes('already has access')) {
+                    errorTitle.textContent = 'Duplicate Access';
+                    errorTitleDisplay.textContent = 'Duplicate Access';
+                    errorIcon.className = 'fas fa-copy text-warning';
+                } else if (errorMessage.includes('cannot add yourself')) {
+                    errorTitle.textContent = 'Invalid Action';
+                    errorTitleDisplay.textContent = 'Invalid Action';
+                    errorIcon.className = 'fas fa-exclamation-circle text-danger';
+                } else {
+                    errorTitle.textContent = 'Error';
+                    errorTitleDisplay.textContent = 'Error';
+                    errorIcon.className = 'fas fa-exclamation-triangle text-danger';
+                }
+                
+                errorModal.show();
+                
+                // Handle modal hidden event to ensure backdrop is removed
+                errorModalElement.addEventListener('hidden.bs.modal', function() {
+                    cleanupModalEffects();
+                });
+                
+                // Handle the OK button click
+                document.getElementById('error-ok-button').addEventListener('click', function() {
+                    // Additional cleanup just to be safe
+                    setTimeout(function() {
+                        cleanupModalEffects();
+                    }, 150); // Small delay to ensure Bootstrap has time to process the original dismiss
+                });
+                
+                // Handle the close button click
+                document.getElementById('error-close-button').addEventListener('click', function() {
+                    // Additional cleanup just to be safe
+                    setTimeout(function() {
+                        cleanupModalEffects();
+                    }, 150);
+                });
+            }
+            
+            // Helper function to clean up modal effects
+            function cleanupModalEffects() {
+                // Remove any leftover backdrop
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+                // Reset body styling
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+            }
+            
+            // Variables to store the current request ID
+            let currentRequestId = null;
+            
+            // Handle approve button clicks
+            document.querySelectorAll('.approve-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    currentRequestId = this.getAttribute('data-request-id');
+                    const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+                    modal.show();
+                });
+            });
+            
+            // Handle deny button clicks
+            document.querySelectorAll('.deny-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    currentRequestId = this.getAttribute('data-request-id');
+                    const modal = new bootstrap.Modal(document.getElementById('denyModal'));
+                    modal.show();
+                });
+            });
+            
+            // Handle approve confirmation
+            document.getElementById('confirmApprove').addEventListener('click', function() {
+                const form = document.getElementById('approveForm');
+                form.action = `/equipment/collections/access-requests/${currentRequestId}/approve/`;
+                form.submit();
+            });
+            
+            // Handle deny confirmation
+            document.getElementById('confirmDeny').addEventListener('click', function() {
+                const form = document.getElementById('denyForm');
+                form.action = `/equipment/collections/access-requests/${currentRequestId}/deny/`;
+                form.submit();
+            });
+            
+            // Handle add user form submission with validation
+            const addUserForm = document.getElementById('add-user-form');
+            if (addUserForm) {
+                addUserForm.addEventListener('submit', function(e) {
+                    const usernameInput = document.getElementById('username');
+                    const username = usernameInput.value.trim();
+                    
+                    // Basic validation
+                    if (!username) {
+                        e.preventDefault();
+                        // Create validation message
+                        showValidationError(usernameInput, 'Username is required');
+                        return false;
+                    }
+                    
+                    // Username format validation (allowing all Google-permitted characters)
+                    if (!/^[a-zA-Z0-9\-_.\']+$/.test(username)) {
+                        e.preventDefault();
+                        showValidationError(usernameInput, 'Username can only contain letters, numbers, dashes (-), underscores (_), apostrophes (\'), and periods (.)');
+                        return false;
+                    }
+                });
+            }
+            
+            // Function to display validation error
+            function showValidationError(inputElement, message) {
+                // Remove any existing validation message
+                const existingFeedback = inputElement.parentElement.querySelector('.invalid-feedback');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+                
+                // Add invalid class to input
+                inputElement.classList.add('is-invalid');
+                
+                // Create and add error message
+                const feedbackElement = document.createElement('div');
+                feedbackElement.className = 'invalid-feedback';
+                feedbackElement.textContent = message;
+                inputElement.parentElement.appendChild(feedbackElement);
+                
+                // Focus on the input
+                inputElement.focus();
+            }
+            
+            // Clear validation errors when typing
+            document.getElementById('username').addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                const existingFeedback = this.parentElement.querySelector('.invalid-feedback');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+            });
+        });
+    </script>
+    {% endblock %}
+{% endblock %} 

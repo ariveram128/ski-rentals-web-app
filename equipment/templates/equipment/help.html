@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Help & Support - SkiRentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3rem 0;
+    }
+    
+    .help-card {
+        transition: transform 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    .help-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .help-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .faq-item {
+        border-bottom: 1px solid var(--gray-300);
+        padding: 1.5rem 0;
+    }
+    
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+    
+    .faq-question {
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .faq-answer {
+        margin-top: 1rem;
+        color: var(--gray-700);
+    }
+    
+    .contact-method {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .contact-icon {
+        width: 50px;
+        height: 50px;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-right: 1rem;
+        font-size: 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-2">Help & Support</h1>
+                    <p class="lead mb-0">We're here to assist with any questions you may have</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'patron' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Help Categories -->
+    <section class="container py-5">
+        <h2 class="text-center mb-4">How Can We Help You?</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card text-center h-100 help-card">
+                    <div class="card-body p-4">
+                        <div class="help-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <h4>FAQs</h4>
+                        <p class="card-text">Find answers to commonly asked questions about our rental process.</p>
+                        <a href="#faqs" class="btn btn-primary">View FAQs</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center h-100 help-card">
+                    <div class="card-body p-4">
+                        <div class="help-icon">
+                            <i class="fas fa-skiing"></i>
+                        </div>
+                        <h4>Equipment Guides</h4>
+                        <p class="card-text">Learn about equipment types, sizing, and maintenance.</p>
+                        <a href="#" class="btn btn-primary">Browse Guides</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center h-100 help-card">
+                    <div class="card-body p-4">
+                        <div class="help-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <h4>Contact Us</h4>
+                        <p class="card-text">Reach out to our customer support team for personalized assistance.</p>
+                        <a href="#contact" class="btn btn-primary">Contact Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FAQs Section -->
+    <section class="bg-light py-5" id="faqs">
+        <div class="container">
+            <h2 class="mb-4">Frequently Asked Questions</h2>
+            
+            <!-- For Renters -->
+            <h5 class="mb-3"><i class="fas fa-user me-2"></i>For Renters</h5>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq1">
+                    <i class="fas fa-chevron-down me-2"></i> How does the rental process work?
+                </div>
+                <div class="collapse show faq-answer" id="faq1">
+                    <p>Our rental process is simple: browse our available equipment online, select your desired items and dates, reserve them through your account, and pick them up at our location. After your activity, return the equipment to our shop by the end of the rental period.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq2">
+                    <i class="fas fa-chevron-down me-2"></i> What if I damage the equipment?
+                </div>
+                <div class="collapse faq-answer" id="faq2">
+                    <p>We understand that accidents happen. Minor wear and tear is expected and covered in your rental fee. For significant damage, we assess it when you return the equipment. We recommend adding rental insurance at checkout which covers most damage for a small additional fee.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq3">
+                    <i class="fas fa-chevron-down me-2"></i> How do I know what size equipment I need?
+                </div>
+                <div class="collapse faq-answer" id="faq3">
+                    <p>For most equipment, we provide sizing guides on each product page. Generally, ski length depends on your height and skill level, while boots are based on your shoe size. When you pick up your equipment, our staff will ensure everything fits properly before you leave.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq4">
+                    <i class="fas fa-chevron-down me-2"></i> Can I extend my rental period?
+                </div>
+                <div class="collapse faq-answer" id="faq4">
+                    <p>Yes, rental extensions are possible subject to equipment availability. Contact us before your rental period ends to request an extension. Additional days will be charged at the standard daily rate.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq5">
+                    <i class="fas fa-chevron-down me-2"></i> Do you offer seasonal rentals?
+                </div>
+                <div class="collapse faq-answer" id="faq5">
+                    <p>Yes, we offer seasonal rentals for most equipment types. Seasonal rentals typically run from November through April and provide significant savings compared to multiple short-term rentals. Contact us directly or check our seasonal rental page for more information.</p>
+                </div>
+            </div>
+            
+            <!-- For Equipment Managers -->
+            <h5 class="mb-3 mt-5"><i class="fas fa-user-tie me-2"></i>For Equipment Managers</h5>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq6">
+                    <i class="fas fa-chevron-down me-2"></i> How do I list my equipment for rental?
+                </div>
+                <div class="collapse faq-answer" id="faq6">
+                    <p>To become an equipment manager on our platform, you'll need to register for a manager account and go through our verification process. Once approved, you can add your inventory through your dashboard. You'll need to provide details like equipment type, brand, model, condition, size options, and high-quality photos.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq7">
+                    <i class="fas fa-chevron-down me-2"></i> How are rental fees determined and paid?
+                </div>
+                <div class="collapse faq-answer" id="faq7">
+                    <p>As an equipment manager, you set your own daily, weekly, and seasonal rental rates. Our platform charges a small commission on each completed rental. Payments are processed securely through our system, and funds are transferred to your account automatically after the rental period concludes and the equipment is confirmed returned.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq8">
+                    <i class="fas fa-chevron-down me-2"></i> What happens if my equipment is damaged?
+                </div>
+                <div class="collapse faq-answer" id="faq8">
+                    <p>Our platform includes a damage protection policy. Minor wear and tear is considered normal, but for significant damage, you can document the issue when equipment is returned. If the renter has insurance, the repair or replacement costs are covered. Otherwise, you can file a claim through our system, and we'll help facilitate the resolution between you and the renter.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq9">
+                    <i class="fas fa-chevron-down me-2"></i> How do I manage multiple rental requests?
+                </div>
+                <div class="collapse faq-answer" id="faq9">
+                    <p>Your manager dashboard provides a comprehensive system to track all incoming rental requests, active rentals, and equipment availability. You can review, approve, or decline requests from this dashboard, and our system automatically prevents double-bookings for the same equipment. You'll receive notifications for new requests, upcoming returns, and any issues that need your attention.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" data-bs-toggle="collapse" data-bs-target="#faq10">
+                    <i class="fas fa-chevron-down me-2"></i> Can I offer both pickup and delivery options?
+                </div>
+                <div class="collapse faq-answer" id="faq10">
+                    <p>Yes, you can customize your service options. You can offer in-store pickup and return, delivery to specific locations (like nearby hotels or resorts), or even home delivery within a service area you define. Each option can have different fees associated with it, and you can adjust your availability calendar to manage your schedule effectively.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contact Section -->
+    <section class="container py-5" id="contact">
+        <h2 class="mb-4">Contact Our Support Team</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Phone Support</h5>
+                        <p class="mb-0">(555) 123-4567</p>
+                        <small class="text-muted">Available daily 9AM - 6PM</small>
+                    </div>
+                </div>
+                
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Email Support</h5>
+                        <p class="mb-0">support@skirentals.example.com</p>
+                        <small class="text-muted">We typically respond within 24 hours</small>
+                    </div>
+                </div>
+                
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Live Chat</h5>
+                        <p class="mb-0">Chat with our support team in real-time</p>
+                        <small class="text-muted">Available weekdays 9AM - 5PM</small>
+                    </div>
+                </div>
+                
+                <div class="contact-method">
+                    <div class="contact-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Visit Us</h5>
+                        <p class="mb-0">123 Powder Road, Mountain Village, CO 81435</p>
+                        <small class="text-muted">Open daily 8AM - 7PM</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mt-4 mt-md-0">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Send Us a Message</h5>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email">
+                            </div>
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select class="form-select" id="subject">
+                                    <option selected>Select a topic</option>
+                                    <option>Rental Question</option>
+                                    <option>Billing Issue</option>
+                                    <option>Equipment Information</option>
+                                    <option>Feedback</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Message</label>
+                                <textarea class="form-control" id="message" rows="4"></textarea>
+                            </div>
+                            <button type="button" class="btn btn-primary" disabled>
+                                <i class="fas fa-paper-plane me-1"></i>Send Message
+                            </button>
+                            <small class="d-block text-muted mt-2">Form submission is disabled in this demo</small>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Help Topics -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <h2 class="mb-4">Browse Help Topics</h2>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-credit-card fa-2x text-primary mb-3"></i>
+                                <h5>Billing & Payments</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-user-shield fa-2x text-primary mb-3"></i>
+                                <h5>Account Security</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-exchange-alt fa-2x text-primary mb-3"></i>
+                                <h5>Returns & Refunds</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="#" class="text-decoration-none">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-book fa-2x text-primary mb-3"></i>
+                                <h5>Terms & Policies</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle FAQ answers
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                
+                if (icon.classList.contains('fa-chevron-down')) {
+                    icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                } else {
+                    icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

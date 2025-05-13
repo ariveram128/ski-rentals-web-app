@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Your Cart - SkiRentals{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .cart-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .cart-item {
+            position: relative;
+            border-bottom: 1px solid var(--gray-300);
+            padding: 1.5rem 0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-img {
+            width: 100px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+
+        .cart-summary {
+            background-color: var(--gray-100);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-total {
+            border-top: 1px solid var(--gray-400);
+            padding-top: 1rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .date-range-badge {
+            padding: 0.35rem 0.65rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Cart Header -->
+    <section class="cart-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-2">Your Cart</h1>
+                    <p class="lead mb-0">Review your items before requesting</p>
+                </div>
+                <a href="{% url 'equipment:index' %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>Continue Browsing
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cart Content -->
+    <section class="container my-5">
+        <div class="row g-4">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0">Cart Items ({{ cart_items|length }})</h5>
+                        {% if cart_items %}
+                            <button class="btn btn-sm btn-outline-danger" id="clear-cart">
+                                <i class="fas fa-trash me-1"></i>Clear Cart
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if cart_items %}
+                            {% for item in cart_items %}
+                                <div class="cart-item" data-item-id="{{ item.id }}">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            {% if item.equipment.main_image %}
+                                                <img src="{{ item.equipment.main_image.url }}" class="card-img-top"
+                                                     alt="{{ item.equipment.brand }} {{ item.equipment.model }}">
+                                            {% else %}
+                                                <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}"
+                                                     class="card-img-top"
+                                                     alt="{{ item.equipment.brand }} {{ item.equipment.model }}">
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-5">
+                                            <h5 class="mb-1">{{ item.equipment.brand }} {{ item.equipment.model }}</h5>
+                                            <span class="badge bg-light text-primary">{{ item.equipment.get_equipment_type_display }}</span>
+                                            {% if item.equipment.recommended_skill_level %}
+                                                <span class="badge bg-light text-primary">{{ item.equipment.get_recommended_skill_level_display }}</span>
+                                            {% endif %}
+                                            <div class="mt-2">
+                                                <span class="date-range-badge bg-info text-white">
+                                                    <i class="far fa-calendar-alt me-1"></i>{{ item.start_date|date:"M d" }} - {{ item.end_date|date:"M d, Y" }}
+                                                </span>
+                                                <span class="date-range-badge bg-secondary text-white ms-1">
+                                                    <i class="far fa-clock me-1"></i>{{ item.get_rental_duration_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 text-center">
+                                            {% if item.rental_duration == 'SEASONAL' %}
+                                                <h6 class="mb-1">${{ item.equipment.rental_price }}/day</h6>
+                                                <small class="text-muted">{{ item.get_rental_days }} days</small>
+                                            {% else %}
+                                                <h6 class="mb-1">${{ item.equipment.rental_price }}/day</h6>
+                                                <small class="text-muted">{{ item.get_rental_days }} days</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2 text-center">
+                                            <h6 class="fw-bold text-primary mb-0">
+                                                {% if item.rental_duration == 'HOURLY' %}
+                                                    ${{ item.get_subtotal|floatformat:2 }}
+                                                {% elif item.rental_duration == 'SEASONAL' %}
+                                                    $
+                                                    {{ item.equipment.rental_price|multiply:item.get_rental_days|floatformat:2 }}
+                                                {% else %}
+                                                    ${{ item.get_subtotal|floatformat:2 }}
+                                                {% endif %}
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-1 text-end">
+                                            <button class="btn btn-sm btn-outline-danger border-0 remove-item"
+                                                    data-item-id="{{ item.id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Empty Cart State -->
+                            <div class="text-center py-5">
+                                <i class="fas fa-shopping-cart fa-4x mb-3 text-muted"></i>
+                                <h4>Your cart is empty</h4>
+                                <p class="text-muted">Browse our equipment and add items to your cart</p>
+                                <a href="{% url 'equipment:index' %}" class="btn btn-primary mt-3">Browse Equipment</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            {% if cart_items %}
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Order Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="cart-summary">
+                                <div class="summary-item">
+                                    <span>Subtotal ({{ cart_items|length }} items)</span>
+                                    <span>${{ cart.get_total_price|floatformat:2 }}</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Insurance</span>
+                                    <span>$25.00</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span>Tax (8.5%)</span>
+                                    <span>${{ cart.get_tax_amount|floatformat:2 }}</span>
+                                </div>
+                                <div class="summary-item summary-total">
+                                    <span>Total</span>
+                                    <span>${{ cart.get_total_with_tax|floatformat:2 }}</span>
+                                </div>
+                            </div>
+
+                            <form action="{% url 'equipment:submit_rental_request' %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-accent w-100 mt-4" id="complete-request">
+                                    <i class="fas fa-check me-2"></i>Submit Rental Request
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Remove item from cart
+            document.querySelectorAll('.remove-item').forEach(button => {
+                button.addEventListener('click', function () {
+                    const itemId = this.dataset.itemId;
+
+                    if (confirm('Are you sure you want to remove this item from your cart?')) {
+                        fetch(`{% url 'equipment:remove_from_cart' 0 %}`.replace('0', itemId), {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken')
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Remove item from DOM
+                                    const cartItem = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+                                    cartItem.remove();
+
+                                    // Reload page to update totals
+                                    window.location.reload();
+                                } else {
+                                    alert(data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('An error occurred while removing the item.');
+                            });
+                    }
+                });
+            });
+
+            // Clear cart
+            const clearCartButton = document.getElementById('clear-cart');
+            if (clearCartButton) {
+                clearCartButton.addEventListener('click', function () {
+                    if (confirm('Are you sure you want to clear your cart? This cannot be undone.')) {
+                        fetch('{% url "equipment:clear_cart" %}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken')
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    window.location.reload();
+                                } else {
+                                    alert(data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('An error occurred while clearing the cart.');
+                            });
+                    }
+                });
+            }
+
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+{% endblock %}

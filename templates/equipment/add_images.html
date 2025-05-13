@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SkiRentals - Add Images{% endblock %}
+
+{% block extra_css %}
+<style>
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        margin-bottom: 1rem;
+    }
+    
+    .existing-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .image-card {
+        width: 200px;
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        position: relative;
+    }
+    
+    .image-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 0.25rem;
+    }
+    
+    .delete-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #dc3545;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Add Images Header -->
+    <section class="bg-primary text-white py-4 mb-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-12">
+                    <h1>Add Images</h1>
+                    <p class="lead mb-0">Add additional images for {{ equipment.brand }} {{ equipment.model }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Images Form -->
+    <section class="container mb-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <!-- Existing Images -->
+                {% if equipment.images.all %}
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Existing Images</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="existing-images">
+                            {% if equipment.main_image %}
+                            <div class="image-card">
+                                <img src="{{ equipment.main_image.url }}" alt="Main image" class="img-fluid">
+                                <div class="mt-2 text-center">
+                                    <span class="badge bg-primary">Main Image</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% for image in equipment.images.all %}
+                            <div class="image-card">
+                                <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Equipment image' }}" class="img-fluid">
+                                <form method="post" action="{% url 'equipment:delete_image' image.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this image?')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                                <div class="mt-2 text-center">
+                                    {% if image.caption %}
+                                    <small>{{ image.caption }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Upload Form -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Upload New Images</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.images.id_for_label }}" class="form-label">Select Images</label>
+                                <input type="file" name="images" multiple id="{{ form.images.id_for_label }}" class="form-control">
+                                <div class="form-text">You can select multiple images at once.</div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'equipment:detail' equipment.id %}" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary">Upload Images</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview selected images
+    document.getElementById('id_images').addEventListener('change', function(e) {
+        const previewContainer = document.createElement('div');
+        previewContainer.id = 'image-previews';
+        previewContainer.className = 'mt-3';
+        
+        // Remove any existing previews
+        const existingPreview = document.getElementById('image-previews');
+        if (existingPreview) {
+            existingPreview.remove();
+        }
+        
+        if (this.files.length > 0) {
+            const previewTitle = document.createElement('h5');
+            previewTitle.textContent = 'Image Previews:';
+            previewContainer.appendChild(previewTitle);
+            
+            const previewGrid = document.createElement('div');
+            previewGrid.className = 'row';
+            
+            for (let i = 0; i < this.files.length; i++) {
+                const file = this.files[i];
+                
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-3';
+                
+                const img = document.createElement('img');
+                img.className = 'image-preview img-thumbnail';
+                img.file = file;
+                
+                const reader = new FileReader();
+                reader.onload = (function(aImg) { 
+                    return function(e) { 
+                        aImg.src = e.target.result; 
+                    }; 
+                })(img);
+                
+                reader.readAsDataURL(file);
+                
+                col.appendChild(img);
+                previewGrid.appendChild(col);
+            }
+            
+            previewContainer.appendChild(previewGrid);
+            this.parentNode.appendChild(previewContainer);
+        }
+    });
+</script>
+{% endblock %} 

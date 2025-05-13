@@ -1,0 +1,512 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ request.user.get_full_name|default:request.user.username }} - Librarian Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3rem 0;
+    }
+
+    .dashboard-stat {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        background-color: white;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-stat:hover {
+        transform: translateY(-5px);
+    }
+
+    .dashboard-stat i {
+        font-size: 2.5rem;
+        margin-bottom: 1.25rem;
+        color: var(--primary-color);
+    }
+
+    .dashboard-stat h3 {
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .management-action {
+        text-align: center;
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        background-color: white;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .management-action:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .management-action:hover i {
+        color: white;
+    }
+
+    .management-action i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        transition: color 0.3s ease;
+    }
+
+    .rental-request {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+        border-left: 5px solid var(--primary-color);
+    }
+
+    .rental-request:hover {
+        transform: translateX(5px);
+    }
+
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 2rem;
+    }
+
+    .inventory-item {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .inventory-item:hover {
+        background-color: var(--gray-100);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Dashboard Header -->
+    <section class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-2">Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h1>
+                    <p class="lead mb-0">Equipment Librarian Dashboard</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'equipment:index' %}" class="btn btn-light me-2">
+                        <i class="fas fa-skiing me-1"></i> View Catalog
+                    </a>
+                    <a href="{% url 'logout' %}" class="btn btn-outline-light">
+                        <i class="fas fa-sign-out-alt me-1"></i> Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Stats -->
+    <section class="container py-5">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="dashboard-stat">
+                    <i class="fas fa-boxes"></i>
+                    <h3>{{ total_equipment }}</h3>
+                    <p class="text-muted mb-0">Total Equipment</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-stat">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>{{ active_rentals_count }}</h3>
+                    <p class="text-muted mb-0">Active Rentals</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-stat">
+                    <i class="fas fa-users"></i>
+                    <h3>{{ total_users }}</h3>
+                    <p class="text-muted mb-0">Registered Users</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-stat">
+                    <i class="fas fa-tools"></i>
+                    <h3>{{ maintenance_equipment.count }}</h3>
+                    <p class="text-muted mb-0">Maintenance Due</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Management Actions -->
+    <section class="container pb-5">
+        <h2 class="mb-4">Management Actions</h2>
+        <div class="row g-4">
+            <div class="col-6 col-md-3">
+                <a href="{% url 'equipment:add_equipment' %}" class="text-decoration-none">
+                    <div class="management-action">
+                        <i class="fas fa-plus-circle"></i>
+                        <h5>Add Equipment</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a href="{% url 'equipment:manage_rentals' %}" class="text-decoration-none">
+                    <div class="management-action">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h5>Manage Rentals</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="management-action">
+                        <i class="fas fa-user-cog"></i>
+                        <h5>User Management</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="management-action">
+                        <i class="fas fa-chart-bar"></i>
+                        <h5>Reports</h5>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Content -->
+    <section class="container pb-5">
+        <div class="row g-4">
+            <!-- Pending Rental Requests -->
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Pending Rental Requests</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Filter
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">All Requests</a></li>
+                                <li><a class="dropdown-item" href="#">New</a></li>
+                                <li><a class="dropdown-item" href="#">Today's Pickups</a></li>
+                                <li><a class="dropdown-item" href="#">Today's Returns</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if pending_rentals %}
+                            {% for rental in pending_rentals %}
+                                <div class="rental-request bg-light">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Rental #{{ rental.id }} - {{ rental.patron.get_full_name|default:rental.patron.username }}</h6>
+                                        <span class="badge bg-warning status-badge">Pending Approval</span>
+                                    </div>
+                                    <div class="d-flex mb-2">
+                                        <div>
+                                            <p class="mb-0 small">
+                                                <i class="fas fa-{% if rental.equipment.equipment_type == 'SKI' %}skiing{% elif rental.equipment.equipment_type == 'SNOWBOARD' %}snowboarding{% else %}box{% endif %} me-1"></i>
+                                                {{ rental.equipment.brand }} {{ rental.equipment.model }}
+                                            </p>
+                                            <p class="mb-0 small text-muted">
+                                                <i class="far fa-calendar-alt me-1"></i>
+                                                {{ rental.checkout_date|date:"M d" }} - {{ rental.due_date|date:"M d, Y" }}
+                                                ({{ rental.checkout_date|timesince:rental.due_date }})
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-end">
+                                        <form method="POST" action="{% url 'equipment:reject_rental' rental.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger me-2">Reject</button>
+                                        </form>
+                                        <form method="POST" action="{% url 'equipment:approve_rental' rental.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info">
+                                No pending rental requests at this time.
+                            </div>
+                        {% endif %}
+
+                        {% if pending_rentals.count > 3 %}
+                            <div class="text-center mt-3">
+                                <a href="#" class="btn btn-outline-primary">View All Requests</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Required -->
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Maintenance Required</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if maintenance_equipment %}
+                            {% for equip in maintenance_equipment %}
+                                <div class="inventory-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">{{ equip.brand }} {{ equip.model }}</h6>
+                                        <span class="badge bg-danger">Needs Repair</span>
+                                    </div>
+                                    <p class="small text-muted mb-2">Last maintained: {{ equip.last_maintained|date:"M d, Y" }}</p>
+                                    <div class="d-flex justify-content-end">
+                                        <button class="btn btn-sm btn-outline-primary">Schedule</button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-success">
+                                No equipment currently needs maintenance.
+                            </div>
+                        {% endif %}
+
+                        {% if maintenance_equipment.count > 3 %}
+                            <div class="text-center mt-3">
+                                <a href="#" class="btn btn-outline-primary">View All Maintenance</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Rentals Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Active Rentals</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Filter
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">All Active</a></li>
+                                <li><a class="dropdown-item" href="#">Due Today</a></li>
+                                <li><a class="dropdown-item" href="#">Overdue</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if active_rentals %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Rental #</th>
+                                            <th>Equipment</th>
+                                            <th>Patron</th>
+                                            <th>Checkout Date</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rental in active_rentals %}
+                                            <tr>
+                                                <td>{{ rental.id }}</td>
+                                                <td>{{ rental.equipment.brand }} {{ rental.equipment.model }}</td>
+                                                <td>{{ rental.patron.get_full_name|default:rental.patron.username }}</td>
+                                                <td>{{ rental.checkout_date|date:"M d, Y" }}</td>
+                                                <td>{{ rental.due_date|date:"M d, Y" }}</td>
+                                                <td>
+                                                    {% if rental.due_date < today_date %}
+                                                        <span class="badge bg-danger">Overdue</span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">Active</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#returnModal{{ rental.id }}">
+                                                        Return
+                                                    </button>
+
+                                                    <!-- Return Modal -->
+                                                    <div class="modal fade" id="returnModal{{ rental.id }}" tabindex="-1" aria-labelledby="returnModalLabel{{ rental.id }}" aria-hidden="true">
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="returnModalLabel{{ rental.id }}">Return Equipment</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <form method="POST" action="{% url 'equipment:complete_rental' rental.id %}">
+                                                                    {% csrf_token %}
+                                                                    <div class="modal-body">
+                                                                        <p>You are marking <strong>{{ rental.equipment.brand }} {{ rental.equipment.model }}</strong> as returned.</p>
+
+                                                                        <div class="mb-3">
+                                                                            <label for="return_condition" class="form-label">Return Condition</label>
+                                                                            <select class="form-select" id="return_condition" name="return_condition">
+                                                                                {% for value, label in rental.equipment.CONDITION_CHOICES %}
+                                                                                    <option value="{{ value }}" {% if value == rental.checked_out_condition %}selected{% endif %}>{{ label }}</option>
+                                                                                {% endfor %}
+                                                                            </select>
+                                                                        </div>
+
+                                                                        <div class="mb-3">
+                                                                            <label for="return_notes" class="form-label">Return Notes</label>
+                                                                            <textarea class="form-control" id="return_notes" name="return_notes" rows="3" placeholder="Enter any notes about the condition of the returned equipment..."></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit" class="btn btn-success">Mark as Returned</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No active rentals at this time.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Inventory Overview -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <h2 class="mb-4">Inventory Overview</h2>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Equipment by Type</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Skis</span>
+                                <div>
+                                    <span class="badge bg-success me-2">18 Available</span>
+                                    <span class="badge bg-secondary">4 Rented</span>
+                                </div>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: 82%"></div>
+                                <div class="progress-bar bg-secondary" style="width: 18%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Snowboards</span>
+                                <div>
+                                    <span class="badge bg-success me-2">12 Available</span>
+                                    <span class="badge bg-secondary">6 Rented</span>
+                                </div>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: 67%"></div>
+                                <div class="progress-bar bg-secondary" style="width: 33%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Boots</span>
+                                <div>
+                                    <span class="badge bg-success me-2">24 Available</span>
+                                    <span class="badge bg-secondary">8 Rented</span>
+                                </div>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: 75%"></div>
+                                <div class="progress-bar bg-secondary" style="width: 25%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Helmets</span>
+                                <div>
+                                    <span class="badge bg-success me-2">15 Available</span>
+                                    <span class="badge bg-secondary">5 Rented</span>
+                                </div>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: 75%"></div>
+                                <div class="progress-bar bg-secondary" style="width: 25%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Equipment by Condition</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>New</span>
+                                <span class="badge bg-success">12 items</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: 15%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Excellent</span>
+                                <span class="badge bg-primary">24 items</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-primary" style="width: 30%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Good</span>
+                                <span class="badge bg-info">32 items</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-info" style="width: 40%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Fair</span>
+                                <span class="badge bg-warning">8 items</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 10px;">
+                                <div class="progress-bar bg-warning" style="width: 10%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Poor (Needs Replacement)</span>
+                                <span class="badge bg-danger">4 items</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-danger" style="width: 5%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <a href="#" class="btn btn-primary">View Full Inventory</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

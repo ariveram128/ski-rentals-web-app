@@ -1,0 +1,1 @@
+# Django management module for equipment app 

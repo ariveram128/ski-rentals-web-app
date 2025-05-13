@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Collections - SkiRentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .collections-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 2rem 0;
+    }
+    
+    .collection-card {
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    
+    .collection-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .collection-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .collection-privacy {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 0.25rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Collections Header -->
+    <section class="collections-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-2">Equipment Collections</h1>
+                    <p class="lead mb-0">Curated sets of equipment for different activities and skill levels</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    {% if user.is_authenticated %}
+                        <button type="button" class="btn btn-light me-2" data-bs-toggle="modal" data-bs-target="#createCollectionModal">
+                            <i class="fas fa-plus-circle me-1"></i> Create Collection
+                        </button>
+                    {% endif %}
+                    <a href="{% url 'equipment:index' %}" class="btn btn-outline-light">
+                        <i class="fas fa-skiing me-1"></i> Browse Equipment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Collections Content -->
+    <section class="container my-5">
+        <!-- Collection Filters -->
+        <div class="row mb-4">
+            <div class="col-md-9">
+                <div class="input-group">
+                    <input type="text" id="collection-search" class="form-control" placeholder="Search collections...">
+                    <button class="btn btn-primary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+{#            <div class="col-md-3">#}
+{#                <select class="form-select" id="equipment-type-filter">#}
+{#                    <option value="all">All Equipment Types</option>#}
+{#                    {% for type_code, type_name in equipment_types %}#}
+{#                        <option value="{{ type_code }}">{{ type_name }}</option>#}
+{#                    {% endfor %}#}
+{#                </select>#}
+{#            </div>#}
+            <div class="col-md-3">
+                <select class="form-select" id="privacy-filter">
+                    <option value="all">All Collections</option>
+                    <option value="public">Public Collections</option>
+                    <option value="private">My Private Collections</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Collections Grid -->
+        <div class="row g-4">
+            {% if collections %}
+                {% for collection in collections %}
+                    <div class="col-md-4 collection-item" data-privacy="{% if collection.sharing_type == 'PUBLIC' %}public{% else %}private{% endif %}">
+                        <div class="card collection-card position-relative">
+                            {% if collection.sharing_type == 'PUBLIC' %}
+                                <span class="badge bg-success collection-privacy">Public</span>
+                            {% else %}
+                                <span class="badge bg-danger collection-privacy">Private</span>
+                            {% endif %}
+                            
+                            {% if collection.items.exists %}
+                                {% with first_item=collection.items.first %}
+                                    {% if first_item.main_image %}
+                                        <img src="{{ first_item.main_image.url }}" class="card-img-top" alt="{{ collection.title }}">
+                                    {% else %}
+                                        {% with first_additional_image=first_item.images.first %}
+                                            {% if first_additional_image %}
+                                                <img src="{{ first_additional_image.image.url }}" class="card-img-top" alt="{{ collection.title }}">
+                                            {% else %}
+                                                <div class="card-img-top d-flex align-items-center justify-content-center bg-primary" style="height: 200px;">
+                                                    <div class="text-center text-white">
+                                                        <i class="fas fa-skiing fa-3x mb-3"></i>
+                                                        <h4>Collection</h4>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-primary" style="height: 200px;">
+                                    <div class="text-center text-white">
+                                        <i class="fas fa-folder-plus fa-3x mb-3"></i>
+                                        <h4>Empty Collection</h4>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">{{ collection.title }}</h5>
+                                <p class="card-text text-muted small">Created {{ collection.created_date|date:"F j, Y" }}{% if collection.creator %} by {{ collection.creator.username }}{% endif %}</p>
+                                <p class="card-text">{{ collection.description|truncatechars:100 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">{{ collection.items.count }} items</span>
+                                    <a href="{% url 'equipment:collection_detail' collection.id %}" class="btn btn-primary">View Collection</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No collections found. 
+                        {% if user.is_authenticated %}
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#createCollectionModal">Create your first collection</a>.
+                        {% else %}
+                            <a href="{% url 'login' %}">Log in</a> to create your own collections.
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+    
+    {% if user.is_authenticated %}
+        <!-- Create Collection Modal -->
+        <div class="modal fade" id="createCollectionModal" tabindex="-1" aria-labelledby="createCollectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createCollectionModalLabel">Create New Collection</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="create-collection-form">
+                            <div class="mb-3">
+                                <label for="collection-title" class="form-label">Collection Title</label>
+                                <input type="text" class="form-control" id="collection-title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="collection-description" class="form-label">Description</label>
+                                <textarea class="form-control" id="collection-description" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="collection-privacy" id="public-collection" value="PUBLIC" checked>
+                                    <label class="form-check-label" for="public-collection">
+                                        <i class="fas fa-globe me-1"></i> Public Collection
+                                        <p class="text-muted small mb-0">Visible to everyone</p>
+                                    </label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="radio" name="collection-privacy" id="private-collection" value="PRIVATE" 
+                                    {% if user.userprofile.user_type == 'PATRON' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="private-collection">
+                                        <i class="fas fa-lock me-1"></i> Private Collection
+                                        <p class="text-muted small mb-0">Only visible to selected users
+                                        {% if user.userprofile.user_type == 'PATRON' %} (Only available for Librarians){% endif %}
+                                        </p>
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="create-collection-button">Create Collection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Collection search
+        const searchInput = document.getElementById('collection-search');
+        {#const typeFilter = document.getElementById('equipment-type-filter');#}
+        const privacyFilter = document.getElementById('privacy-filter');
+        
+        // Filtering functionality
+        function filterCollections() {
+            const searchTerm = searchInput.value.toLowerCase();
+            {#const typeValue = typeFilter.value;#}
+            const privacyValue = privacyFilter.value;
+            
+            document.querySelectorAll('.collection-item').forEach(item => {
+                const title = item.querySelector('.card-title').textContent.toLowerCase();
+                const description = item.querySelector('.card-text:not(.small)').textContent.toLowerCase();
+                const privacy = item.dataset.privacy;
+                
+                // Check search term
+                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                
+                // Check privacy
+                const matchesPrivacy = privacyValue === 'all' || privacy === privacyValue;
+                
+                // Apply visibility
+                if (matchesSearch && matchesPrivacy) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        searchInput.addEventListener('input', filterCollections);
+        privacyFilter.addEventListener('change', filterCollections);
+        
+        // Create collection
+        const createButton = document.getElementById('create-collection-button');
+        if (createButton) {
+            createButton.addEventListener('click', function() {
+                const title = document.getElementById('collection-title').value;
+                const description = document.getElementById('collection-description').value;
+                const sharingType = document.querySelector('input[name="collection-privacy"]:checked').value;
+                
+                if (!title || !description) {
+                    alert('Please fill out all required fields.');
+                    return;
+                }
+                
+                fetch('{% url "equipment:create_collection" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: `title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&sharing_type=${sharingType}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('createCollectionModal'));
+                        modal.hide();
+                        
+                        // Reload the page to show the new collection
+                        window.location.href = '/equipment/collections/' + data.collection_id + '/';
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while creating the collection.');
+                });
+            });
+        }
+        
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}Sign Up - SkiRentals{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white p-4 text-center">
+                    <h2 class="mb-0">Create Your SkiRentals Account</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2 fa-lg"></i>
+                            <div>
+                                <strong>Already have an account?</strong> 
+                                <a href="{% url 'account_login' %}" class="ms-2 btn btn-sm btn-accent">Sign in here</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="p-3">
+                                <h4 class="text-center mb-4">Sign Up with Google</h4>
+                                <div class="d-flex justify-content-center mb-4">
+                                    <a href="{% provider_login_url 'google' %}" class="btn btn-lg btn-accent w-50">
+                                        <i class="fab fa-google me-2"></i> Continue with Google
+                                    </a>
+                                </div>
+                                <div class="alert alert-info text-center">
+                                    <small>The quickest way to join! Simply sign in with your Google account to create your SkiRentals account instantly!</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Bootstrap classes to the form inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('#{{ form.username.id_for_label }}').classList.add('form-control');
+        document.querySelector('#{{ form.password1.id_for_label }}').classList.add('form-control');
+        document.querySelector('#{{ form.password2.id_for_label }}').classList.add('form-control');
+    });
+</script>
+{% endblock %}

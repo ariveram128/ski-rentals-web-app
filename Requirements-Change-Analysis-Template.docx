@@ -1,0 +1,151 @@
+CS 3240 - Requirements Change Analysis	 	             Computing ID: ____________ / Team: A-25
+All project documents are due into Gradescope at the listed date and time associated with the appropriate Gradescope assignment.  No late work is accepted without prior approval beyond what is shown in Gradescope.
+
+Instructions:
+Fill out your computing ID and team ID above.
+Carefully read the requirements change as outlined on the course website under "Project Information."
+Examine your current set of requirements in GitHub that relate to this requirements change.
+As a team, discuss how your team will handle the change.  This includes aspects such as direct changes to the code base, changes to the data model, division of labor, etc.
+The Software Architect will capture this discussion and help guide the requirements change effort, discussing their efforts in this document.
+Delete all template information and instructions (leave major headings, etc.) to make a more professional looking document.  This includes these instructions along with all notes in <<>>.  We will hold you to a high standard here.  Ask if you have any questions.
+Only the Software Architects will submit this report.
+
+Assessment:
+Goal: To effectively communicate the effect of the requirements change and your team's plan to modify your system/design to the course staff.
+To succeed at this assessment, you must do the following:
+Successfully explain in detail to the course staff how the requirements change affects your team's current project design.  Some aspects of this could include (but are not limited to):
+Changes to the models, views, and templates
+Changes to your own requirements in GitHub Issues/Projects
+Added complexity to your project
+Division of labor on your team
+Clearly communicate to the course staff how you will enact the change.  We expect that documents earning high points will have a combination of textual explanation along with design diagrams.
+
+The course staff will be looking for the following in addition to everything listed above:
+A "complete" explanation of the impacts of the change and how you will address it.  Your document should make it clear to the course staff what you will do without anyone having to look at your code base or other artifacts.
+Professional presentation is expected.  This encompasses everything from language and grammar, to formatting, to overall flow/presentation of information in your documents.  Diagrams should be created with a digital tool and not by hand.  We will hold you to a high standard.  Use the provided font, font size, and margins in this template.
+
+
+
+Requirements Change Effects
+
+The requirements change to allow patrons to create public collections affects multiple components of our system:
+
+1. Data Model Changes:
+   We need to add a creator field (ForeignKey to User) to our Collection model to track ownership. 
+   The is_public field becomes more significant as we'll need to enforce that patron collections can only be public. 
+   The Collection-Equipment relationship will now need to consider creator permissions for any modifications.
+
+2. View/Controller Changes:
+   Our create Collection functionality must enforce patron-specific restrictions, allowing them to create public collections only. 
+   The add/remove equipment views will need permission checks to verify creator status. Collection listing and detail views should 
+   display creator information, and all modification endpoints need permission validation to make sure only creators can make changes.
+
+3. Template/UI Changes:
+   We'll need to disable the "private" option for patrons in the collection creation form and clearly display creator information
+   on collection pages. Action buttons like add/remove should only appear for the creator, and we'll need intuitive error handling
+   for unauthorized modification attempts. 
+
+4. Requirements & Complexity:
+   The change adds role-based access control complexity to collections, requiring additional data model fields and view/controller logic.
+   Data integrity becomes more challenging with multiple user types creating collections, necessitating careful validation and permission checks.
+   Backward compatibility with existing collections (without creators) must be handled, potentially requiring migration scripts.
+   User experience must be intuitive despite different permission levels, with clear feedback for unauthorized actions.
+   Testing becomes more complex with multiple roles to test, requiring additional unit tests and integration checks.
+
+5. User Experience Impact:
+   While patrons gain new functionality (create collections), they also face restrictions on collection visibility.
+   Users may now see collections they cannot modify, making clear ownership information essential for usability.
+
+Requirements Change Plan
+
+Our implementation strategy addresses the requirements change through careful planning:
+
+1. Model Updates:
+   - Add creator field to Collection model with null=True to support existing data
+   - Implement a data migration script to assign creators to existing collections
+   - Update Collection model's string representation to include creator information
+
+2. Controller Implementation:
+   We'll modify the create_collection view to set the creator field to the current user and validate input based on user role.
+   The add_to_collection and remove_from_collection views will check creator permissions.
+   The collection listing will display creator information.
+
+3. UI/Template Changes:
+   We'll update collection_detail.html to show creator and limit actions to creator.
+   - Modify collections.html to display creator info and disable private option for patrons
+   - Add clear error messaging for permission violations
+
+4. Testing Strategy:
+   We'll add unit tests specifically for permission checking. That will include testing that patrons can only create public collections
+   and that only creators can modify collections. We'll also test backward compatibility with existing collections.
+
+5. Work Distribution:
+   We'll split the work among the team members. I'll handle the model changes and migrations.
+   The rest of the team will handle the controller logic, UI/template changes, and testing.
+
+6. System Design Diagrams:
+
+Figure 1: Collection Creation Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant User
+    participant View
+    participant Permission Check
+    participant Collection Model
+    
+    User->>View: Create Collection Request
+    View->>Permission Check: Validate User Role
+    alt is Patron
+        Permission Check->>Permission Check: Check if Public
+        alt is Private
+            Permission Check-->>View: Error: Patrons can only create public collections
+            View-->>User: Display Error Message
+        end
+    end
+    Permission Check->>Collection Model: Create Collection
+    Collection Model->>Collection Model: Set Creator = Current User
+    Collection Model-->>View: Collection Created
+    View-->>User: Display Success Message
+```
+This sequence diagram illustrates the workflow for collection creation with the new permission system. It shows how patron requests are validated to ensure they can only create public collections, and how errors are propagated back to the user interface.
+
+Figure 2: Updated Collection Model Class Diagram
+```mermaid
+classDiagram
+    class Collection {
+        +String name
+        +String description
+        +Boolean is_public
+        +User creator
+        +DateTime created_at
+        +DateTime updated_at
+        +add_equipment()
+        +remove_equipment()
+        +is_creator()
+    }
+    
+    class User {
+        +String username
+        +String role
+        +create_collection()
+    }
+    
+    class Equipment {
+        +String name
+        +String description
+        +Decimal price
+    }
+    
+    Collection --> User : created by
+    Collection --> Equipment : contains
+```
+This class diagram shows the updated data model with the new creator field linking collections to users. This relationship enables ownership tracking and permission enforcement, allowing us to restrict modification actions to collection creators only.
+
+7. Timeline:
+   - Model changes and migrations: Complete by March 23
+   - Controller logic updates: Complete by March 25
+   - UI/Template changes: Complete by March 27
+   - Testing and documentation: Complete by March 29
+
+The implementation will be done on a separate feature branch (patron-collections) with pull requests for review to ensure all team members 
+understand the permissions system. We'll follow Django's best practices for permission checking and provide clear user feedback about permission restrictions.

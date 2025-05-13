@@ -1,0 +1,911 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ collection.title }} - SkiRentals{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .collection-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .equipment-card {
+            position: relative;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            overflow: visible;
+        }
+
+        .equipment-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .equipment-card.fade-out {
+            opacity: 0;
+        }
+
+        .equipment-card .card-body {
+            position: relative;
+            z-index: 2;
+        }
+
+        .equipment-card .btn {
+            position: relative;
+            z-index: 3;
+        }
+
+        .privacy-badge {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
+        }
+
+        .collection-description {
+            white-space: pre-line;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Collection Header -->
+    <section class="collection-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <h1 class="mb-0 me-3">{{ collection.title }}</h1>
+                        {% if collection.sharing_type == 'PUBLIC' %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-globe me-1"></i> Public
+                            </span>
+                        {% elif collection.sharing_type == 'PRIVATE' %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-lock me-1"></i> Private
+                            </span>
+                        {% else %}
+                            <span class="badge bg-primary">
+                                <i class="fas fa-user-friends me-1"></i> Shared
+                            </span>
+                        {% endif %}
+                    </div>
+                    <p class="lead mb-0">{{ collection.items.count }} items | Created
+                        {{ collection.created_date|date:"F j, Y" }}{% if collection.creator %} by
+                            {{ collection.creator.username }}{% endif %}</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'equipment:index' %}" class="btn btn-outline-light">
+                        <i class="fas fa-skiing me-1"></i> Browse Equipment
+                    </a>
+                    {% if user.is_authenticated and user == collection.creator %}
+                        <button class="btn btn-outline-light ms-2" data-bs-toggle="modal"
+                                data-bs-target="#editCollectionModal">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </button>
+                        {% if collection.sharing_type != 'PUBLIC' %}
+                            <a href="{% url 'equipment:manage_collection_users' collection.id %}"
+                               class="btn btn-outline-light ms-2">
+                                <i class="fas fa-users me-1"></i> Manage Access
+                            </a>
+                        {% endif %}
+                        <button class="btn btn-outline-danger ms-2" data-bs-toggle="modal"
+                                data-bs-target="#deleteCollectionModal">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </button>
+                    {% elif can_request_access %}
+                        <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal"
+                           data-bs-target="#requestAccessModal">
+                            <i class="fas fa-key me-1"></i> Request Access
+                        </a>
+                    {% elif has_pending_request %}
+                        <button class="btn btn-outline-secondary ms-2" disabled>
+                            <i class="fas fa-hourglass-half me-1"></i> Access Requested
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toast Notifications Container -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- Collection Content -->
+    <section class="container my-5">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Collection Description</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="collection-description">{{ collection.description|linebreaksbr }}</p>
+                    </div>
+                </div>
+
+                <!-- Search Form Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Search Collection</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="" class="d-flex">
+                            <div class="input-group">
+                                <input type="text" name="collection_search" class="form-control"
+                                       placeholder="Search by brand, model, or type..."
+                                       value="{{ search_query|default:'' }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                                {% if is_search %}
+                                    <a href="{% url 'equipment:collection_detail' collection.id %}"
+                                       class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times"></i> Clear
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+
+                {% if user.is_authenticated and user == collection.creator %}
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Equipment in this Collection</h2>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+                            <i class="fas fa-plus me-2"></i>Add Equipment
+                        </button>
+                    </div>
+                {% else %}
+                    <h2 class="mb-4">Equipment in this Collection</h2>
+                {% endif %}
+
+                {% if has_content_access %}
+                    {% if is_search %}
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Showing {{ filtered_items.count }} results for "<strong>{{ search_query }}</strong>"
+                            {% if filtered_items.count == 0 %}
+                                <div class="mt-2">
+                                    <a href="{% url 'equipment:collection_detail' collection.id %}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-arrow-left me-1"></i> Back to all items
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if filtered_items.exists %}
+                        <div class="equipment-grid">
+                            {% for equipment in filtered_items %}
+                                <div class="card equipment-card">
+                                    <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>
+                                    {% if equipment.recommended_skill_level %}
+                                        <span class="skill-level">{{ equipment.get_recommended_skill_level_display }}</span>
+                                    {% endif %}
+
+                                    {% if equipment.main_image %}
+                                        <img src="{{ equipment.main_image.url }}" class="card-img-top"
+                                             alt="{{ equipment.brand }} {{ equipment.model }}">
+                                    {% else %}
+                                        {% with first_image=equipment.images.first %}
+                                            {% if first_image %}
+                                                <img src="{{ first_image.image.url }}" class="card-img-top"
+                                                     alt="{{ equipment.brand }} {{ equipment.model }}">
+                                            {% else %}
+                                                <img src="{% static 'images/placeholders/collection-placeholder.jpg' %}"
+                                                     class="card-img-top"
+                                                     alt="{{ equipment.brand }} {{ equipment.model }}">
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ equipment.brand }} {{ equipment.model }}</h5>
+                                        <p class="card-text">Size: {{ equipment.size }}</p>
+
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-bold text-primary">${{ equipment.rental_price }}/day</span>
+                                            <div class="star-rating">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= equipment.average_rating|floatformat:0|add:"0" %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% elif forloop.counter <= equipment.average_rating|floatformat:1|add:"0.5" %}
+                                                        <i class="fas fa-star-half-alt"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="ms-1">{{ equipment.average_rating }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex">
+                                            <a href="{% url 'equipment:detail' equipment.id %}"
+                                               class="btn btn-primary flex-grow-1 me-2"
+                                               style="z-index: 10; position: relative;">View Details</a>
+                                            {% if user.is_authenticated and user == collection.creator %}
+                                                <button class="btn btn-outline-danger remove-equipment"
+                                                        data-equipment-id="{{ equipment.id }}"
+                                                        data-collection-id="{{ collection.id }}"
+                                                        data-bs-toggle="tooltip" title="Remove from collection"
+                                                        style="z-index: 10; position: relative;">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% if is_search %}
+                                No equipment found matching "{{ search_query }}".
+                            {% else %}
+                                This collection is empty.
+                                {% if user.is_authenticated and user == collection.creator %}
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">Add
+                                        equipment</a> to get started.
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-lock me-2"></i>
+                        <strong>This is a {{ collection.get_sharing_type_display }} collection.</strong>
+                        You cannot view the contents of this collection.
+                        {% if can_request_access %}
+                            <div class="mt-3">
+                                <a href="#" class="btn btn-primary" data-bs-toggle="modal"
+                                   data-bs-target="#requestAccessModal">
+                                    <i class="fas fa-key me-1"></i> Request Access
+                                </a>
+                            </div>
+                        {% endif %}
+                        {% if has_pending_request %}
+                            <div class="mt-2">
+                <span class="badge bg-warning text-dark">
+                    <i class="fas fa-clock me-1"></i> Access Request Pending
+                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Collection Stats</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Equipment Count
+                                <span class="badge bg-primary rounded-pill">{{ collection.items.count }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Rental Value
+                                <span class="badge bg-primary rounded-pill">${{ collection.items.all|sum_values:"rental_price" }}/day</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Created
+                                <span>{{ collection.created_date|date:"F j, Y" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Last Updated
+                                <span>{{ collection.modified_date|date:"F j, Y" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {% if collection.items.exists %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Equipment Types</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                {% for type_code, type_name in equipment_types %}
+                                    {% with count=collection.items.filter equipment_type=type_code|length %}
+                                        {% if count > 0 %}
+                                            <span class="badge bg-primary">{{ type_name }} ({{ count }})</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    {% if user.is_authenticated and user == collection.creator %}
+        <!-- Add Equipment Modal -->
+        <div class="modal fade" id="addEquipmentModal" tabindex="-1" aria-labelledby="addEquipmentModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addEquipmentModalLabel">Add Equipment to Collection</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="equipment-search"
+                                   placeholder="Search equipment...">
+                        </div>
+
+                        <div class="row g-3" id="equipment-results">
+                            <!-- Equipment search results will be displayed here -->
+                            <div class="col-12">
+                                <p class="text-center text-muted">Search for equipment to add to this collection.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Collection Modal -->
+        <div class="modal fade" id="editCollectionModal" tabindex="-1" aria-labelledby="editCollectionModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editCollectionModalLabel">Edit Collection</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="edit-collection-form">
+                            <div class="mb-3">
+                                <label for="edit-collection-title" class="form-label">Collection Title</label>
+                                <input type="text" class="form-control" id="edit-collection-title"
+                                       value="{{ collection.title }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-collection-description" class="form-label">Description</label>
+                                <textarea class="form-control" id="edit-collection-description" rows="3"
+                                          required>{{ collection.description }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="edit-collection-privacy"
+                                           id="edit-public-collection" value="PUBLIC"
+                                           {% if collection.sharing_type == 'PUBLIC' %}checked{% endif %}>
+                                    <label class="form-check-label" for="edit-public-collection">
+                                        <i class="fas fa-globe me-1"></i> Public Collection
+                                        <p class="text-muted small mb-0">Visible to everyone</p>
+                                    </label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="radio" name="edit-collection-privacy"
+                                           id="edit-private-collection" value="PRIVATE"
+                                           {% if collection.sharing_type == 'PRIVATE' %}checked{% endif %}
+                                           {% if user.userprofile.user_type == 'PATRON' %}disabled{% endif %}>
+                                    <label class="form-check-label" for="edit-private-collection">
+                                        <i class="fas fa-lock me-1"></i> Private Collection
+                                        <p class="text-muted small mb-0">Only visible to selected users
+                                            {% if user.userprofile.user_type == 'PATRON' %} (Only available for
+                                                Librarians){% endif %}
+                                        </p>
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="save-collection-button">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Collection Modal -->
+        <div class="modal fade" id="deleteCollectionModal" tabindex="-1" aria-labelledby="deleteCollectionModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteCollectionModalLabel">Delete Collection</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the collection <strong>"{{ collection.title }}"</strong>?</p>
+                        <p class="text-danger">This action cannot be undone. The collection will be permanently
+                            deleted.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirm-delete-button">Delete Collection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remove Equipment Confirmation Modal -->
+        <div class="modal fade" id="removeEquipmentModal" tabindex="-1" aria-labelledby="removeEquipmentModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="removeEquipmentModalLabel">Remove Equipment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to remove <strong id="remove-equipment-name"></strong> from this
+                            collection?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirm-remove-button">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Request Access Modal -->
+    {% if can_request_access %}
+        <div class="modal fade" id="requestAccessModal" tabindex="-1" aria-labelledby="requestAccessModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="requestAccessModalLabel">
+                            <i class="fas fa-key me-2"></i>Request Access to Collection
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="{% url 'equipment:request_collection_access' collection.id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <h5 class="card-title">{{ collection.title }}</h5>
+                            <p class="text-muted">Created by: {{ collection.creator.username }}</p>
+
+                            <p>This is a {{ collection.get_sharing_type_display }} collection that requires permission
+                                from the owner to access.</p>
+
+                            <p>Would you like to request access to view and potentially rent equipment from this
+                                collection?</p>
+
+                            {% if denied_request %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Note:</strong> Your previous request was denied
+                                    on {{ denied_request.response_date|date:"F d, Y" }}.
+                                    {% if denied_request.response_note %}
+                                        <p class="mb-0 mt-1">Reason: "{{ denied_request.response_note }}"</p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Function to show toast notification
+            function showToast(message, type = 'success') {
+                const toastId = 'toast-' + Date.now();
+                const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-${type}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+                const toastContainer = document.getElementById('toast-container');
+                toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, {
+                    autohide: true,
+                    delay: 3000
+                });
+                toast.show();
+
+                // Remove toast from DOM after it's hidden
+                toastElement.addEventListener('hidden.bs.toast', function () {
+                    toastElement.remove();
+                });
+            }
+
+            // Function to update collection stats
+            function updateCollectionStats(changeAmount) {
+                // Update equipment count
+                const countElement = document.querySelector('.list-group-item:nth-child(1) .badge');
+                if (countElement) {
+                    const currentCount = parseInt(countElement.textContent);
+                    countElement.textContent = currentCount - 1;
+                }
+
+                // Update total rental value
+                const valueElement = document.querySelector('.list-group-item:nth-child(2) .badge');
+                if (valueElement && changeAmount) {
+                    const currentValue = parseFloat(valueElement.textContent.replace('$', ''));
+                    const newValue = (currentValue - changeAmount).toFixed(2);
+                    valueElement.textContent = '$' + newValue + '/day';
+                }
+            }
+
+            // Variables to store equipment removal information
+            let currentEquipmentId = null;
+            let currentCollectionId = null;
+            let currentEquipmentElement = null;
+            let currentRentalPrice = 0;
+
+            // Remove equipment from collection using modal confirmation
+            document.querySelectorAll('.remove-equipment').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Store the equipment info for the modal
+                    currentEquipmentId = this.dataset.equipmentId;
+                    currentCollectionId = this.dataset.collectionId;
+                    currentEquipmentElement = this.closest('.equipment-card');
+
+                    // Get equipment name
+                    const equipmentName = currentEquipmentElement.querySelector('.card-title').textContent;
+                    document.getElementById('remove-equipment-name').textContent = equipmentName;
+
+                    // Get the rental price for stats update
+                    const priceElement = currentEquipmentElement.querySelector('.text-primary');
+                    currentRentalPrice = priceElement ? parseFloat(priceElement.textContent.replace('$', '').replace('/day', '')) : 0;
+
+                    // Show the confirmation modal
+                    const removeModal = new bootstrap.Modal(document.getElementById('removeEquipmentModal'));
+                    removeModal.show();
+                });
+            });
+
+            // Confirm remove button click handler
+            document.getElementById('confirm-remove-button').addEventListener('click', function () {
+                // Ensure we have valid equipment info
+                if (!currentEquipmentId || !currentCollectionId || !currentEquipmentElement) {
+                    return;
+                }
+
+                fetch(`{% url 'equipment:remove_from_collection' 0 0 %}`.replace('0/0', `${currentEquipmentId}/${currentCollectionId}`), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close the confirmation modal
+                            const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeEquipmentModal'));
+                            removeModal.hide();
+
+                            // Show toast notification
+                            showToast(data.message, 'success');
+
+                            // Add fade out effect
+                            currentEquipmentElement.classList.add('fade-out');
+
+                            // Update the collection stats
+                            updateCollectionStats(currentRentalPrice);
+
+                            // Remove after animation completes
+                            setTimeout(() => {
+                                currentEquipmentElement.remove();
+
+                                // Reload the page if the collection is now empty
+                                if (document.querySelectorAll('.equipment-card').length === 0) {
+                                    window.location.reload();
+                                }
+                            }, 300);
+                        } else {
+                            // Close the confirmation modal
+                            const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeEquipmentModal'));
+                            removeModal.hide();
+
+                            // Show error toast
+                            showToast(data.message, 'danger');
+                        }
+
+                        // Reset current equipment info
+                        currentEquipmentId = null;
+                        currentCollectionId = null;
+                        currentEquipmentElement = null;
+                        currentRentalPrice = 0;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+
+                        // Close the confirmation modal
+                        const removeModal = bootstrap.Modal.getInstance(document.getElementById('removeEquipmentModal'));
+                        removeModal.hide();
+
+                        // Show error toast
+                        showToast('An error occurred while removing the equipment.', 'danger');
+
+                        // Reset current equipment info
+                        currentEquipmentId = null;
+                        currentCollectionId = null;
+                        currentEquipmentElement = null;
+                        currentRentalPrice = 0;
+                    });
+            });
+
+            // Equipment search
+            const searchInput = document.getElementById('equipment-search');
+            const resultsContainer = document.getElementById('equipment-results');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    const searchTerm = this.value.trim();
+
+                    if (searchTerm.length < 2) {
+                        resultsContainer.innerHTML = '<div class="col-12"><p class="text-center text-muted">Enter at least 2 characters to search.</p></div>';
+                        return;
+                    }
+
+                    // Display loading indicator
+                    resultsContainer.innerHTML = '<div class="col-12"><p class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Searching...</p></div>';
+
+                    // Fetch equipment that matches the search term
+                    fetch(`{% url 'equipment:search_equipment' %}?q=${encodeURIComponent(searchTerm)}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.equipment.length === 0) {
+                                resultsContainer.innerHTML = '<div class="col-12"><p class="text-center text-muted">No equipment found.</p></div>';
+                                return;
+                            }
+
+                            let html = '';
+                            data.equipment.forEach(item => {
+                                html += `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${item.brand} ${item.model}</h5>
+                                        <p class="card-text">${item.equipment_type}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-primary">$${item.rental_price}/day</span>
+                                            <button class="btn btn-primary add-to-collection" data-equipment-id="${item.id}">Add</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                            });
+
+                            resultsContainer.innerHTML = html;
+
+                            // Add event listeners to add buttons
+                            document.querySelectorAll('.add-to-collection').forEach(button => {
+                                button.addEventListener('click', function () {
+                                    const equipmentId = this.dataset.equipmentId;
+
+                                    fetch(`{% url 'equipment:add_to_collection' 0 %}`.replace('0', equipmentId), {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                            'X-CSRFToken': getCookie('csrftoken')
+                                        },
+                                        body: `collection_id={{ collection.id }}`
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                // Disable the button and show success message
+                                                this.disabled = true;
+                                                this.textContent = 'Added';
+                                                this.classList.replace('btn-primary', 'btn-success');
+
+                                                // Show toast notification
+                                                showToast(data.message, 'success');
+
+                                                // Reload page after a short delay to display the new item
+                                                setTimeout(() => {
+                                                    window.location.reload();
+                                                }, 800); // Short delay to show the button change before reload
+                                            } else {
+                                                showToast(data.message, 'danger');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Error:', error);
+                                            showToast('An error occurred while adding the equipment.', 'danger');
+                                        });
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            resultsContainer.innerHTML = '<div class="col-12"><p class="text-center text-danger">An error occurred while searching.</p></div>';
+                        });
+                });
+            }
+
+            // Edit collection
+            const saveCollectionButton = document.getElementById('save-collection-button');
+            if (saveCollectionButton) {
+                saveCollectionButton.addEventListener('click', function () {
+                    const title = document.getElementById('edit-collection-title').value;
+                    const description = document.getElementById('edit-collection-description').value;
+                    const sharingType = document.querySelector('input[name="edit-collection-privacy"]:checked').value;
+
+                    if (!title || !description) {
+                        showToast('Please enter both a title and description.', 'danger');
+                        return;
+                    }
+
+                    // Update button state to show processing
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                    fetch(`{% url 'equipment:edit_collection' collection.id %}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: `title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&sharing_type=${sharingType}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            saveCollectionButton.disabled = false;
+                            saveCollectionButton.innerHTML = 'Save Changes';
+
+                            if (data.success) {
+                                // Close modal
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('editCollectionModal'));
+                                modal.hide();
+
+                                // Show toast notification
+                                showToast(data.message, 'success');
+
+                                // Update the page UI to reflect changes
+                                document.querySelector('h1.mb-0').textContent = title;
+
+                                // Update privacy badge
+                                const privacyBadge = document.querySelector('.badge');
+                                if (privacyBadge) {
+                                    if (sharingType === 'PUBLIC') {
+                                        privacyBadge.className = 'badge bg-success';
+                                        privacyBadge.innerHTML = '<i class="fas fa-globe me-1"></i> Public';
+                                    } else if (sharingType === 'PRIVATE') {
+                                        privacyBadge.className = 'badge bg-danger';
+                                        privacyBadge.innerHTML = '<i class="fas fa-lock me-1"></i> Private';
+                                    }
+                                }
+
+                                // Update description
+                                const descriptionElement = document.querySelector('.collection-description');
+                                if (descriptionElement) {
+                                    descriptionElement.innerHTML = description.replace(/\n/g, '<br>');
+                                }
+
+                                // Update last modified date if it exists
+                                const lastUpdatedElement = document.querySelector('.list-group-item:nth-child(4) span');
+                                if (lastUpdatedElement) {
+                                    const now = new Date();
+                                    const month = now.toLocaleString('default', {month: 'long'});
+                                    lastUpdatedElement.textContent = `${month} ${now.getDate()}, ${now.getFullYear()}`;
+                                }
+                            } else {
+                                showToast(data.message, 'danger');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showToast('An error occurred while updating the collection.', 'danger');
+
+                            // Re-enable button
+                            saveCollectionButton.disabled = false;
+                            saveCollectionButton.innerHTML = 'Save Changes';
+                        });
+                });
+            }
+
+            // Delete collection
+            const deleteCollectionButton = document.getElementById('confirm-delete-button');
+            if (deleteCollectionButton) {
+                deleteCollectionButton.addEventListener('click', function () {
+                    fetch(`{% url 'equipment:delete_collection' collection.id %}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Close modal
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteCollectionModal'));
+                                modal.hide();
+
+                                // Show toast notification and redirect to collections page
+                                showToast(data.message, 'success');
+                                setTimeout(() => {
+                                    window.location.href = "{% url 'equipment:collections' %}";
+                                }, 1000);
+                            } else {
+                                showToast(data.message, 'danger');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showToast('An error occurred while deleting the collection.', 'danger');
+                        });
+                });
+            }
+
+            // Update request access links in the alert box to use the modal
+            document.querySelectorAll("a[href^='{% url 'equipment:request_collection_access' collection.id %}']").forEach(link => {
+                link.href = '#';
+                link.setAttribute('data-bs-toggle', 'modal');
+                link.setAttribute('data-bs-target', '#requestAccessModal');
+            });
+        });
+    </script>
+{% endblock %}

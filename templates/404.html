@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+    {% load socialaccount %}
+
+{% block title %}SkiRentals - Home{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="bg-danger text-white py-5 my-5" style="min-height: 606px; display: flex; align-items: center;">
+        <div class="container text-center">
+            <h1 class="mb-4">Oops! You've gone off trail!</h1>
+            <p class="lead mb-5">Try returning home or browsing with the navigation bar above.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'home' %}" class="btn btn-light btn-lg">
+                    Return to home page
+                </a>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

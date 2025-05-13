@@ -1,0 +1,169 @@
+/* SkiRentals Admin - Login Page */
+
+/* Using the variables from custom_admin.css */
+:root {
+  --primary-color: #1a2980;      /* Deep blue - sky/winter */
+  --secondary-color: #ffffff;    /* Crisp white - snow */
+  --accent-color: #ff7e5f;       /* Bright orange - call-to-action */
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+}
+
+/* Login page container */
+.login {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--gray-100);
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#container {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login #header {
+  padding: 0;
+  justify-content: center;
+  background: var(--primary-color);
+  padding: 0;
+  height: auto;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.login #branding {
+  width: 100%;
+  padding: 25px;
+  text-align: center;
+}
+
+.login #branding h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  margin: 0;
+  color: white;
+}
+
+/* Login card styling */
+.login-card {
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  overflow: hidden;
+}
+
+.login-header {
+  background-color: var(--primary-color);
+  padding: 25px;
+  text-align: center;
+  color: white;
+}
+
+.login-header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  margin: 10px 0;
+  font-weight: 800;
+}
+
+/* Form styling */
+#login-form {
+  padding: 25px;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--gray-700);
+}
+
+#login-form input[type="text"],
+#login-form input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+#login-form input[type="text"]:focus,
+#login-form input[type="password"]:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(26, 41, 128, 0.25);
+}
+
+/* Submit button */
+.submit-row {
+  margin-top: 1.5rem;
+}
+
+.submit-row input[type="submit"] {
+  font-family: inherit;
+  font-weight: 600;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.submit-row input[type="submit"]:hover {
+  background-color: var(--accent-color);
+}
+
+/* Return to site button */
+.btn-outline-secondary {
+  background-color: transparent;
+  border: 1px solid var(--gray-500);
+  color: var(--gray-700);
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--gray-200);
+  color: var(--gray-800);
+  text-decoration: none;
+}
+
+/* Alerts */
+.alert {
+  padding: 10px 15px;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+} 

@@ -1,0 +1,1827 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ equipment.brand }} {{ equipment.model }} - SkiRentals{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .equipment-detail-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .equipment-specs {
+            background-color: var(--gray-100);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .spec-item {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-300);
+            padding-bottom: 1rem;
+        }
+
+        .spec-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .spec-label {
+            flex: 0 0 40%;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .spec-value {
+            flex: 0 0 60%;
+        }
+
+        .availability-badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+        }
+
+        .review-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .rating-form .rating-input {
+            display: none;
+        }
+
+        .rating-form .rating-star {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--gray-400);
+        }
+
+        .rating-form .rating-star:hover,
+        .rating-form .rating-star.active {
+            color: var(--warning-color);
+        }
+
+        .equipment-images {
+            position: relative;
+        }
+
+        .equipment-thumbnails {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .equipment-thumbnail {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+
+        .equipment-thumbnail.active {
+            border-color: var(--primary-color);
+            opacity: 1;
+        }
+
+        .equipment-thumbnail:hover {
+            opacity: 1;
+        }
+
+        /* Carousel enhancements */
+        .carousel-item {
+            height: 400px;
+            background-color: var(--gray-200);
+        }
+
+        .carousel-item img {
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-control-prev,
+        .carousel-control-next {
+            background-color: rgba(0, 0, 0, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.7;
+        }
+
+        .carousel-control-prev {
+            left: 10px;
+        }
+
+        .carousel-control-next {
+            right: 10px;
+        }
+
+        .carousel-control-prev:hover,
+        .carousel-control-next:hover {
+            opacity: 1;
+        }
+
+        /* Calendar styles */
+        .calendar-container {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .calendar-header {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .calendar-header .cal-cell {
+            flex: 1;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .cal-cell {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .cal-cell.blank {
+            background-color: transparent;
+            cursor: default;
+        }
+
+        .cal-cell.disabled {
+            color: #aaa;
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .cal-cell.available {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .cal-cell.available:hover {
+            background-color: rgba(40, 167, 69, 0.3);
+        }
+
+        .cal-cell.unavailable {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            cursor: not-allowed;
+        }
+
+        .cal-cell.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Multi-month calendar enhancements */
+        .calendar-multi-month .card {
+            border: 1px solid #eee;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-multi-month .card-header {
+            border-bottom: 1px solid #eee;
+            background-color: rgba(240, 240, 240, 0.5);
+        }
+
+        .calendar-multi-month .card-footer {
+            border-top: 1px solid #eee;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        /* Booking summary section styling */
+        .booking-cost {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Button styling */
+        .btn-primary {
+            background-color: #e87b2f;
+            border-color: #e87b2f;
+        }
+
+        .btn-primary:hover {
+            background-color: #d66a1e;
+            border-color: #d66a1e;
+        }
+
+        .request-dates-btn {
+            height: 50px;
+            font-size: 1.1rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Equipment Detail Header -->
+    <section class="equipment-detail-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1>{{ equipment.brand }} {{ equipment.model }}</h1>
+                    <p class="lead mb-0">{{ equipment.size }} | {{ equipment.get_equipment_type_display }}</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    {% if equipment.is_available %}
+                        <span class="badge bg-success availability-badge">Available</span>
+                    {% else %}
+                        <span class="badge bg-danger availability-badge">Unavailable</span>
+                    {% endif %}
+                    {% if user.is_authenticated and user.userprofile.user_type == 'LIBRARIAN' %}
+                        <div class="mt-2">
+                            <a href="{% url 'equipment:edit_equipment' equipment.pk %}" class="btn btn-outline-light ms-2">
+                                <i class="fas fa-edit me-1"></i> Edit
+                            </a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteEquipmentModal">
+                                <i class="fas fa-trash-alt me-2"></i>Delete Equipment
+                            </button>
+                        </div>
+                    {% endif %}
+                    <div class="mt-2">
+                        <span class="me-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= equipment.average_rating|floatformat:"0" %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        <small class="text-white">{{ equipment.average_rating }} ({{ equipment.review_set.count }}
+                            reviews)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Equipment Detail Content -->
+    <section class="container py-5">
+        <div class="row">
+            <div class="col-lg-6">
+                <!-- Equipment Images -->
+                <div class="equipment-images mb-4">
+                    <div id="equipmentImageCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% if equipment.main_image or additional_images %}
+                                {% if equipment.main_image %}
+                                    <div class="carousel-item active">
+                                        <img src="{{ equipment.main_image.url }}" class="d-block w-100"
+                                             alt="{{ equipment.brand }} {{ equipment.model }}">
+                                    </div>
+                                {% endif %}
+
+                                {% for image in additional_images %}
+                                    <div class="carousel-item {% if not equipment.main_image and forloop.first %}active{% endif %}">
+                                        <img src="{{ image.image.url }}" class="d-block w-100"
+                                             alt="{{ image.caption|default:equipment.brand }}">
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="carousel-item active">
+                                    <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}"
+                                         class="d-block w-100" alt="{{ equipment.brand }} {{ equipment.model }}">
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if equipment.main_image or additional_images %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#equipmentImageCarousel"
+                                    data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#equipmentImageCarousel"
+                                    data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Image Thumbnails -->
+                    <div class="equipment-thumbnails">
+                        {% if equipment.main_image %}
+                            <img src="{{ equipment.main_image.url }}" class="equipment-thumbnail active"
+                                 data-bs-target="#equipmentImageCarousel" data-bs-slide-to="0" alt="Main image">
+
+                            {% for image in additional_images %}
+                                <img src="{{ image.image.url }}" class="equipment-thumbnail"
+                                     data-bs-target="#equipmentImageCarousel" data-bs-slide-to="{{ forloop.counter }}"
+                                     alt="{{ image.caption|default:'Additional image' }}">
+                            {% endfor %}
+                        {% elif additional_images %}
+                            {% for image in additional_images %}
+                                <img src="{{ image.image.url }}" class="equipment-thumbnail {% if forloop.first %}active{% endif %}"
+                                     data-bs-target="#equipmentImageCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                                     alt="{{ image.caption|default:'Additional image' }}">
+                            {% endfor %}
+                        {% else %}
+                            <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}"
+                                 class="equipment-thumbnail active" data-bs-target="#equipmentImageCarousel"
+                                 data-bs-slide-to="0" alt="Placeholder">
+                        {% endif %}
+                    </div>
+
+                    {% if user.userprofile.user_type == 'LIBRARIAN' %}
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addImagesModal">
+                                <i class="fas fa-plus-circle me-1"></i> Add/Remove Images
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recommendations -->
+{#                <div class="mt-4">#}
+{#                    <h4>You Might Also Like</h4>#}
+{#                    <div class="row g-3 mt-2">#}
+{#                        <div class="col-6">#}
+{#                            <div class="card h-100">#}
+{#                                <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}" class="card-img-top"#}
+{#                                     alt="Related Equipment">#}
+{#                                <div class="card-body p-2">#}
+{#                                    <h6 class="card-title mb-1">Related Equipment</h6>#}
+{#                                    <div class="d-flex justify-content-between align-items-center">#}
+{#                                        <small class="text-primary">$40/day</small>#}
+{#                                        <div class="star-rating small">#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="far fa-star"></i>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="col-6">#}
+{#                            <div class="card h-100">#}
+{#                                <img src="https://via.placeholder.com/200x150" class="card-img-top"#}
+{#                                     alt="Related Equipment">#}
+{#                                <div class="card-body p-2">#}
+{#                                    <h6 class="card-title mb-1">Related Equipment</h6>#}
+{#                                    <div class="d-flex justify-content-between align-items-center">#}
+{#                                        <small class="text-primary">$35/day</small>#}
+{#                                        <div class="star-rating small">#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="fas fa-star"></i>#}
+{#                                            <i class="fas fa-star-half-alt"></i>#}
+{#                                            <i class="far fa-star"></i>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+            </div>
+
+            <!-- Equipment Specs and Details -->
+            <div class="col-lg-6">
+                <ul class="nav nav-tabs mb-4" id="equipmentDetailTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="specs-tab" data-bs-toggle="tab"
+                                data-bs-target="#specs-tab-pane" type="button" role="tab" aria-controls="specs-tab-pane"
+                                aria-selected="true">Specifications
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="availability-tab" data-bs-toggle="tab"
+                                data-bs-target="#availability-tab-pane" type="button" role="tab"
+                                aria-controls="availability-tab-pane" aria-selected="false">Availability
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="description-tab" data-bs-toggle="tab"
+                                data-bs-target="#description-tab-pane" type="button" role="tab"
+                                aria-controls="description-tab-pane" aria-selected="false">Description
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
+                                data-bs-target="#reviews-tab-pane" type="button" role="tab"
+                                aria-controls="reviews-tab-pane" aria-selected="false">Reviews <span
+                                class="badge bg-secondary">{{ equipment.review_set.count }}</span></button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="equipmentDetailTabsContent">
+                    <!-- Specifications Tab -->
+                    <div class="tab-pane fade show active" id="specs-tab-pane" role="tabpanel"
+                         aria-labelledby="specs-tab" tabindex="0">
+                        <div class="equipment-specs">
+                            <div class="spec-item">
+                                <div class="spec-label">Location</div>
+                                <div class="spec-value">{{ equipment.location }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Brand</div>
+                                <div class="spec-value">{{ equipment.brand }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Model</div>
+                                <div class="spec-value">{{ equipment.model }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Type</div>
+                                <div class="spec-value">{{ equipment.get_equipment_type_display }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Size</div>
+                                <div class="spec-value">{{ equipment.size }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Condition</div>
+                                <div class="spec-value">
+                                    <span class="badge {% if equipment.condition == 'NEW' %}bg-success{% elif equipment.condition == 'EXCELLENT' %}bg-success{% elif equipment.condition == 'GOOD' %}bg-info{% elif equipment.condition == 'FAIR' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ equipment.get_condition_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Skill Level</div>
+                                <div class="spec-value">{{ equipment.get_recommended_skill_level_display }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Recommended Height</div>
+                                <div class="spec-value">{{ equipment.recommended_height_range }}</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Daily Rate</div>
+                                <div class="spec-value">${{ equipment.rental_price }}</div>
+                            </div>
+                            {% if equipment.weekly_rate %}
+                                <div class="spec-item">
+                                    <div class="spec-label">Weekly Rate</div>
+                                    <div class="spec-value">${{ equipment.weekly_rate }}</div>
+                                </div>
+                            {% endif %}
+                            {% if equipment.seasonal_rate %}
+                                <div class="spec-item">
+                                    <div class="spec-label">Seasonal Rate</div>
+                                    <div class="spec-value">${{ equipment.seasonal_rate }}</div>
+                                </div>
+                            {% endif %}
+                            {% if equipment.rent_to_own_price %}
+                                <div class="spec-item">
+                                    <div class="spec-label">Rent-to-Own Price</div>
+                                    <div class="spec-value">${{ equipment.rent_to_own_price }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Availability Calendar Tab -->
+                    <div class="tab-pane fade" id="availability-tab-pane" role="tabpanel"
+                         aria-labelledby="availability-tab" tabindex="0">
+                        <div class="p-3">
+                            <h5 class="mb-3">Availability Calendar</h5>
+
+                            <!-- Price and Availability Header -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                                    <div>
+                                        <h5 class="mb-0">Prices and availability</h5>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-success p-2">✓ Instant booking</span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <!-- Date Selection Inputs -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-6">
+                                            <label for="start-date" class="form-label">Start Date</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border"><i
+                                                        class="far fa-calendar-alt"></i></span>
+                                                <input type="date" class="form-control" id="start-date"
+                                                       name="start_date" min="{{ today_date }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="end-date" class="form-label">End Date</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light border"><i
+                                                        class="far fa-calendar-alt"></i></span>
+                                                <input type="date" class="form-control" id="end-date" name="end_date"
+                                                       min="{{ today_date }}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rental Duration Selection -->
+                                    <div class="mb-4">
+                                        <label for="rental-duration" class="form-label">Rental Duration</label>
+                                        <select class="form-select" id="rental-duration" name="rental_duration">
+                                            <option value="DAILY" selected>Daily</option>
+                                            <option value="WEEKLY">Weekly</option>
+                                            <option value="SEASONAL">Seasonal</option>
+                                        </select>
+                                        <div class="form-text" id="duration-description">
+                                            Daily rental: Rent by the day - perfect for short trips.
+                                        </div>
+
+                                        <div id="duration-requirements" class="alert alert-warning mt-2 d-none">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <span id="requirement-text"></span>
+                                        </div>
+
+                                        <div id="availability-message" class="alert alert-info mt-2">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Please select a date range to check availability.
+                                        </div>
+                                    </div>
+
+                                    <!-- Booking Cost Summary -->
+                                    <div class="row align-items-center mb-3">
+                                        <div class="col-md-6">
+                                            <!-- This will be shown when dates are selected -->
+                                            <div id="date-selected-info" class="d-none">
+                                                <p class="mb-0 text-muted">Selected Dates: <span
+                                                        id="selected-date-range" class="text-primary">Mar 15 - Mar 20, 2025</span>
+                                                </p>
+                                                <p class="mb-0 text-muted">Duration: <span id="days-count"
+                                                                                           class="text-primary">5 days</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 text-md-end">
+                                            <h5 class="mb-0">Booking cost: <span class="text-primary"
+                                                                                 id="total-price">${{ equipment.rental_price }}</span>
+                                            </h5>
+                                        </div>
+                                    </div>
+
+                                    <!-- Book/Request Button -->
+                                    <div class="d-grid">
+                                        <form action="{% url 'equipment:add_to_cart' equipment.id %}" method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="start_date" id="form-start-date">
+                                            <input type="hidden" name="end_date" id="form-end-date">
+                                            <input type="hidden" name="rental_duration" id="form-rental-duration">
+                                            <button type="submit" class="btn btn-primary btn-lg w-100 request-dates-btn"
+                                                    disabled>
+                                                Book Now
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Legend for Calendar -->
+                            <div class="d-flex flex-wrap gap-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="cal-cell blank me-2" style="width: 20px; height: 20px;"></div>
+                                    <span>Unavailable</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="cal-cell available me-2" style="width: 20px; height: 20px;"></div>
+                                    <span>Your booking</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="cal-cell selected me-2" style="width: 20px; height: 20px;"></div>
+                                    <span>Available start/end date</span>
+                                </div>
+                            </div>
+
+                            <!-- Multi-Month Calendar View -->
+                            <div class="calendar-multi-month mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <button class="btn btn-sm btn-outline-secondary" id="prev-months"><i
+                                            class="fas fa-chevron-left"></i></button>
+                                    <h6 class="mb-0" id="calendar-range-display">May 2025 - July 2025</h6>
+                                    <button class="btn btn-sm btn-outline-secondary" id="next-months"><i
+                                            class="fas fa-chevron-right"></i></button>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- First Month -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light text-center py-2">
+                                                <h6 class="mb-0" id="month1-display">May 2025</h6>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="calendar-container">
+                                                    <div class="calendar-header d-flex mb-2">
+                                                        <div class="cal-cell">Mon</div>
+                                                        <div class="cal-cell">Tue</div>
+                                                        <div class="cal-cell">Wed</div>
+                                                        <div class="cal-cell">Thu</div>
+                                                        <div class="cal-cell">Fri</div>
+                                                        <div class="cal-cell">Sat</div>
+                                                        <div class="cal-cell">Sun</div>
+                                                    </div>
+                                                    <div class="calendar-grid" id="calendar-days-1">
+                                                        <!-- Month 1 calendar days will be generated by JavaScript -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer text-center bg-white py-2">
+                                                <small class="text-muted" id="month1-price">From
+                                                    ${{ equipment.rental_price }} per week</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Second Month -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light text-center py-2">
+                                                <h6 class="mb-0" id="month2-display">June 2025</h6>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="calendar-container">
+                                                    <div class="calendar-header d-flex mb-2">
+                                                        <div class="cal-cell">Mon</div>
+                                                        <div class="cal-cell">Tue</div>
+                                                        <div class="cal-cell">Wed</div>
+                                                        <div class="cal-cell">Thu</div>
+                                                        <div class="cal-cell">Fri</div>
+                                                        <div class="cal-cell">Sat</div>
+                                                        <div class="cal-cell">Sun</div>
+                                                    </div>
+                                                    <div class="calendar-grid" id="calendar-days-2">
+                                                        <!-- Month 2 calendar days will be generated by JavaScript -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer text-center bg-white py-2">
+                                                <small class="text-muted" id="month2-price">From
+                                                    ${{ equipment.rental_price }} per week</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Third Month -->
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-header bg-light text-center py-2">
+                                                <h6 class="mb-0" id="month3-display">July 2025</h6>
+                                            </div>
+                                            <div class="card-body p-2">
+                                                <div class="calendar-container">
+                                                    <div class="calendar-header d-flex mb-2">
+                                                        <div class="cal-cell">Mon</div>
+                                                        <div class="cal-cell">Tue</div>
+                                                        <div class="cal-cell">Wed</div>
+                                                        <div class="cal-cell">Thu</div>
+                                                        <div class="cal-cell">Fri</div>
+                                                        <div class="cal-cell">Sat</div>
+                                                        <div class="cal-cell">Sun</div>
+                                                    </div>
+                                                    <div class="calendar-grid" id="calendar-days-3">
+                                                        <!-- Month 3 calendar days will be generated by JavaScript -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer text-center bg-white py-2">
+                                                <small class="text-muted" id="month3-price">From
+                                                    ${{ equipment.rental_price }} per week</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <button id="clear-dates" class="btn btn-link text-primary">Clear dates</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Tab -->
+                    <div class="tab-pane fade" id="description-tab-pane" role="tabpanel"
+                         aria-labelledby="description-tab" tabindex="0">
+                        <div class="p-3">
+                            <p>{{ equipment.notes|linebreaksbr }}</p>
+
+                            <h5 class="mt-4">Equipment History</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Date Added:</strong> {{ equipment.date_added|date:"F j, Y" }}
+                                    </div>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Last Maintained:</strong> {{ equipment.last_maintained|date:"F j, Y" }}
+                                    </div>
+                                </li>
+                                {% if equipment.next_maintenance_due %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>Next Maintenance
+                                                Due:</strong> {{ equipment.next_maintenance_due|date:"F j, Y" }}
+                                        </div>
+                                    </li>
+                                {% endif %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Total Times Rented:</strong> {{ equipment.total_rentals }}
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Reviews Tab -->
+                    <div class="tab-pane fade" id="reviews-tab-pane" role="tabpanel" aria-labelledby="reviews-tab"
+                         tabindex="0">
+                        <div class="p-3">
+                            <!-- Write a Review -->
+                            {% if user.is_authenticated %}
+                                <div class="mb-4 p-3 border rounded">
+                                    <h5>Write a Review</h5>
+                                    <form class="rating-form" action="{% url 'equipment:add_review' equipment.id %}"
+                                          method="post">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label class="form-label">Your Rating</label>
+                                            <div>
+                                                <input type="radio" class="rating-input" name="rating" id="rating-5"
+                                                       value="5"
+                                                       {% if user_review and user_review.rating == 5 %}checked{% endif %}>
+                                                <input type="radio" class="rating-input" name="rating" id="rating-4"
+                                                       value="4"
+                                                       {% if user_review and user_review.rating == 4 %}checked{% endif %}>
+                                                <input type="radio" class="rating-input" name="rating" id="rating-3"
+                                                       value="3"
+                                                       {% if user_review and user_review.rating == 3 %}checked{% endif %}>
+                                                <input type="radio" class="rating-input" name="rating" id="rating-2"
+                                                       value="2"
+                                                       {% if user_review and user_review.rating == 2 %}checked{% endif %}>
+                                                <input type="radio" class="rating-input" name="rating" id="rating-1"
+                                                       value="1"
+                                                       {% if user_review and user_review.rating == 1 %}checked{% endif %}>
+
+                                                <label for="rating-1" class="rating-star me-1"><i
+                                                        class="far fa-star"></i></label>
+                                                <label for="rating-2" class="rating-star me-1"><i
+                                                        class="far fa-star"></i></label>
+                                                <label for="rating-3" class="rating-star me-1"><i
+                                                        class="far fa-star"></i></label>
+                                                <label for="rating-4" class="rating-star me-1"><i
+                                                        class="far fa-star"></i></label>
+                                                <label for="rating-5" class="rating-star"><i
+                                                        class="far fa-star"></i></label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="comment" class="form-label">Your Review</label>
+                                            <textarea class="form-control" id="comment" name="comment"
+                                                      rows="3">{{ user_review.comment|default:'' }}</textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">{% if user_review %}
+                                            Update{% else %}Submit{% endif %} Review
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+
+                            <!-- Review List -->
+                            <div class="review-list">
+                                <!-- Rating distribution -->
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Customer Ratings</h5>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="display-4 me-3">{{ equipment.average_rating }}</div>
+                                            <div>
+                                                <div class="star-rating mb-1">
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= equipment.average_rating|floatformat:"0" %}
+                                                            <i class="fas fa-star"></i>
+                                                        {% elif forloop.counter <= equipment.average_rating|add:"0.5"|floatformat:"0" %}
+                                                            <i class="fas fa-star-half-alt"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                <small class="text-muted">{{ rating_distribution.total }}
+                                                    reviews</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Rating breakdown -->
+                                        <div class="rating-breakdown">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="text-nowrap me-2">5 <i class="fas fa-star text-warning"></i>
+                                                </div>
+                                                <div class="progress flex-grow-1" style="height: 8px;">
+                                                    <div class="progress-bar bg-success" role="progressbar"
+                                                         style="width: {{ rating_distribution.5_percent }}%"></div>
+                                                </div>
+                                                <div class="text-nowrap ms-2">{{ rating_distribution.5_percent }}%</div>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="text-nowrap me-2">4 <i class="fas fa-star text-warning"></i>
+                                                </div>
+                                                <div class="progress flex-grow-1" style="height: 8px;">
+                                                    <div class="progress-bar bg-success" role="progressbar"
+                                                         style="width: {{ rating_distribution.4_percent }}%"></div>
+                                                </div>
+                                                <div class="text-nowrap ms-2">{{ rating_distribution.4_percent }}%</div>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="text-nowrap me-2">3 <i class="fas fa-star text-warning"></i>
+                                                </div>
+                                                <div class="progress flex-grow-1" style="height: 8px;">
+                                                    <div class="progress-bar bg-warning" role="progressbar"
+                                                         style="width: {{ rating_distribution.3_percent }}%"></div>
+                                                </div>
+                                                <div class="text-nowrap ms-2">{{ rating_distribution.3_percent }}%</div>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="text-nowrap me-2">2 <i class="fas fa-star text-warning"></i>
+                                                </div>
+                                                <div class="progress flex-grow-1" style="height: 8px;">
+                                                    <div class="progress-bar bg-warning" role="progressbar"
+                                                         style="width: {{ rating_distribution.2_percent }}%"></div>
+                                                </div>
+                                                <div class="text-nowrap ms-2">{{ rating_distribution.2_percent }}%</div>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="text-nowrap me-2">1 <i class="fas fa-star text-warning"></i>
+                                                </div>
+                                                <div class="progress flex-grow-1" style="height: 8px;">
+                                                    <div class="progress-bar bg-danger" role="progressbar"
+                                                         style="width: {{ rating_distribution.1_percent }}%"></div>
+                                                </div>
+                                                <div class="text-nowrap ms-2">{{ rating_distribution.1_percent }}%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Reviews -->
+                                {% if equipment.review_set.all %}
+                                    {% for review in equipment.review_set.all %}
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <div class="d-flex mb-3">
+                                                    <div class="review-avatar me-3">
+                                                        {% if review.user.userprofile.profile_picture %}
+                                                            <img src="{{ review.user.userprofile.profile_picture.url }}"
+                                                                 class="review-avatar"
+                                                                 alt="{{ review.user.username }} Avatar">
+                                                        {% else %}
+                                                            <div class="d-flex align-items-center justify-content-center bg-light"
+                                                                 style="width: 50px; height: 50px; border-radius: 50%;">
+                                                                <i class="fas fa-user text-secondary"></i>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                                        <div class="star-rating mb-1">
+                                                            {% for i in "12345" %}
+                                                                {% if forloop.counter <= review.rating %}
+                                                                    <i class="fas fa-star text-warning"></i>
+                                                                {% else %}
+                                                                    <i class="far fa-star text-warning"></i>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                        <small class="text-muted">{{ review.date_posted|timesince }}
+                                                            ago</small>
+                                                    </div>
+                                                </div>
+                                                <p class="card-text">{{ review.comment }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        No reviews yet. Be the first to review this equipment!
+                                    </div>
+                                {% endif %}
+
+                                {% if equipment.review_set.count > 3 %}
+                                    <!-- View more reviews button -->
+                                    <div class="text-center mt-3">
+                                        <button class="btn btn-outline-primary" id="view-more-reviews">View All
+                                            Reviews
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Equipment Section -->
+{#    <section class="bg-light py-5">#}
+{#        <div class="container">#}
+{#            <h2 class="mb-4">Similar Equipment</h2>#}
+{#            <div class="row g-4">#}
+{#                <div class="col-md-3">#}
+{#                    <div class="card equipment-card position-relative h-100">#}
+{#                        <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>#}
+{#                        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Similar Equipment">#}
+{#                        <div class="card-body">#}
+{#                            <h5 class="card-title">Similar {{ equipment.get_equipment_type_display }}</h5>#}
+{#                            <div class="d-flex justify-content-between align-items-center mb-2">#}
+{#                                <span class="fw-bold text-primary">$48/day</span>#}
+{#                                <div class="star-rating">#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="far fa-star"></i>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <a href="#" class="btn btn-primary w-100">View Details</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="col-md-3">#}
+{#                    <div class="card equipment-card position-relative h-100">#}
+{#                        <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>#}
+{#                        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Similar Equipment">#}
+{#                        <div class="card-body">#}
+{#                            <h5 class="card-title">Similar {{ equipment.get_equipment_type_display }}</h5>#}
+{#                            <div class="d-flex justify-content-between align-items-center mb-2">#}
+{#                                <span class="fw-bold text-primary">$52/day</span>#}
+{#                                <div class="star-rating">#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star-half-alt"></i>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <a href="#" class="btn btn-primary w-100">View Details</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="col-md-3">#}
+{#                    <div class="card equipment-card position-relative h-100">#}
+{#                        <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>#}
+{#                        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Similar Equipment">#}
+{#                        <div class="card-body">#}
+{#                            <h5 class="card-title">Similar {{ equipment.get_equipment_type_display }}</h5>#}
+{#                            <div class="d-flex justify-content-between align-items-center mb-2">#}
+{#                                <span class="fw-bold text-primary">$38/day</span>#}
+{#                                <div class="star-rating">#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="far fa-star"></i>#}
+{#                                    <i class="far fa-star"></i>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <a href="#" class="btn btn-primary w-100">View Details</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="col-md-3">#}
+{#                    <div class="card equipment-card position-relative h-100">#}
+{#                        <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>#}
+{#                        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Similar Equipment">#}
+{#                        <div class="card-body">#}
+{#                            <h5 class="card-title">Similar {{ equipment.get_equipment_type_display }}</h5>#}
+{#                            <div class="d-flex justify-content-between align-items-center mb-2">#}
+{#                                <span class="fw-bold text-primary">$43/day</span>#}
+{#                                <div class="star-rating">#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="fas fa-star"></i>#}
+{#                                    <i class="far fa-star"></i>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <a href="#" class="btn btn-primary w-100">View Details</a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </section>#}
+    {% if user.is_authenticated and user.userprofile.user_type == 'LIBRARIAN' %}
+<!-- Delete Equipment Confirmation Modal -->
+<div class="modal fade" id="deleteEquipmentModal" tabindex="-1" aria-labelledby="deleteEquipmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteEquipmentModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>{{ equipment.brand }} {{ equipment.model }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone. All information about this equipment, including images and rental history, will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'equipment:delete_equipment' equipment.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Equipment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Images Modal -->
+<div class="modal fade" id="addImagesModal" tabindex="-1" aria-labelledby="addImagesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addImagesModalLabel">Add Images for {{ equipment.brand }} {{ equipment.model }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Existing Images Preview -->
+                {% if equipment.images.all %}
+                <div class="mb-4">
+                    <h6 class="mb-3">Existing Images</h6>
+                    <div class="d-flex flex-wrap gap-3">
+                        {% if equipment.main_image %}
+                        <div class="position-relative" style="width: 120px;">
+                            <img src="{{ equipment.main_image.url }}" alt="Main image" class="img-fluid img-thumbnail" style="height: 90px; object-fit: cover;">
+                            <span class="badge bg-primary position-absolute" style="bottom: 0; right: 0;">Main</span>
+                        </div>
+                        {% endif %}
+
+                        {% for image in equipment.images.all %}
+                        <div class="position-relative" style="width: 120px;">
+                            <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Equipment image' }}" class="img-fluid img-thumbnail" style="height: 90px; object-fit: cover;">
+                            <button type="button" class="btn-close position-absolute delete-image-btn"
+                                style="top: -5px; right: -5px; background-color: white; border-radius: 50%; padding: 5px; box-shadow: 0 0 5px rgba(0,0,0,0.2);"
+                                data-image-id="{{ image.id }}"
+                                title="Delete image"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <hr>
+                {% endif %}
+
+                <!-- Upload Form -->
+                <form id="uploadImagesForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_images" class="form-label">Select Images</label>
+                        <input type="file" name="images" multiple id="id_images" class="form-control" accept="image/*">
+                        <div class="form-text">You can select multiple images at once.</div>
+                    </div>
+                    <div id="image-previews" class="row mt-3"></div>
+                    <div id="upload-status" class="alert d-none my-3"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="upload-images-btn">Upload Images</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Add Image Upload Modal JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Image Preview functionality
+            const imageInput = document.getElementById('id_images');
+            if (imageInput) {
+                imageInput.addEventListener('change', function() {
+                    const previewsContainer = document.getElementById('image-previews');
+                    previewsContainer.innerHTML = '';
+
+                    if (this.files.length > 0) {
+                        for (let i = 0; i < this.files.length; i++) {
+                            const file = this.files[i];
+
+                            // Create a column for each image preview
+                            const col = document.createElement('div');
+                            col.className = 'col-md-4 col-sm-6 mb-3';
+
+                            // Create image element
+                            const previewImg = document.createElement('img');
+                            previewImg.className = 'img-fluid img-thumbnail';
+                            previewImg.style.height = '150px';
+                            previewImg.style.objectFit = 'cover';
+
+                            // Read the image file
+                            const reader = new FileReader();
+                            reader.onload = (function(img) {
+                                return function(e) {
+                                    img.src = e.target.result;
+                                }
+                            })(previewImg);
+                            reader.readAsDataURL(file);
+
+                            // Add to the column
+                            col.appendChild(previewImg);
+                            previewsContainer.appendChild(col);
+                        }
+                    }
+                });
+            }
+
+            // Handle Image Upload via AJAX
+            const uploadButton = document.getElementById('upload-images-btn');
+            if (uploadButton) {
+                uploadButton.addEventListener('click', function() {
+                    const form = document.getElementById('uploadImagesForm');
+                    const fileInput = document.getElementById('id_images');
+                    const statusDiv = document.getElementById('upload-status');
+
+                    // Check if files are selected
+                    if (fileInput.files.length === 0) {
+                        statusDiv.textContent = 'Please select at least one image to upload.';
+                        statusDiv.className = 'alert alert-warning my-3';
+                        statusDiv.classList.remove('d-none');
+                        return;
+                    }
+
+                    // Create FormData object to send files
+                    const formData = new FormData(form);
+
+                    // Show loading message
+                    statusDiv.textContent = 'Uploading images...';
+                    statusDiv.className = 'alert alert-info my-3';
+                    statusDiv.classList.remove('d-none');
+                    uploadButton.disabled = true;
+
+                    // Send AJAX request
+                    fetch('{% url "equipment:add_images" equipment.id %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show success message
+                            statusDiv.textContent = data.message || 'Images uploaded successfully!';
+                            statusDiv.className = 'alert alert-success my-3';
+
+                            // Clear file input and preview
+                            fileInput.value = '';
+                            document.getElementById('image-previews').innerHTML = '';
+
+                            // Reload the page after a short delay to show new images
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            // Show error message
+                            statusDiv.textContent = data.message || 'Error uploading images.';
+                            statusDiv.className = 'alert alert-danger my-3';
+                            uploadButton.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        statusDiv.textContent = 'An error occurred. Please try again.';
+                        statusDiv.className = 'alert alert-danger my-3';
+                        uploadButton.disabled = false;
+                    });
+                });
+            }
+
+            // Handle Delete Image buttons
+            const deleteButtons = document.querySelectorAll('.delete-image-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const imageId = this.getAttribute('data-image-id');
+                    if (!imageId) return;
+
+                    if (confirm('Are you sure you want to delete this image?')) {
+                        // Send delete request
+                        fetch(`/equipment/images/${imageId}/delete/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                // Remove the image from the UI
+                                this.closest('.position-relative').remove();
+
+                                // Reload the page after a short delay to update carousel
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 500);
+                            } else {
+                                alert('Error deleting image. Please try again.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error deleting image. Please try again.');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Calendar and other existing JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check if URL has a hash for tab
+            if (window.location.hash) {
+                // If there's a hash, activate the corresponding tab
+                const tabId = window.location.hash;
+                const tabEl = document.querySelector(`button[data-bs-target="${tabId}-pane"]`);
+
+                if (tabEl) {
+                    const tab = new bootstrap.Tab(tabEl);
+                    tab.show();
+                }
+            }
+            let selectedStartDate = null;
+            let selectedEndDate = null;
+
+            // Initialize the calendar
+            const today = new Date();
+            let currentMonth = today.getMonth();
+            let currentYear = today.getFullYear();
+
+            // Initialize base prices for the footer
+            const baseWeeklyPrice = {{ equipment.weekly_rate|default:equipment.rental_price }} * 5;
+
+            // Generate all three month calendars
+            function generateCalendars() {
+                // Calculate months to display (3 consecutive months)
+                const months = [];
+                for (let i = 0; i < 3; i++) {
+                    let month = (currentMonth + i) % 12;
+                    let year = currentYear + Math.floor((currentMonth + i) / 12);
+                    months.push({month, year});
+
+                    // Update month header display
+                    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    document.getElementById(`month${i + 1}-display`).textContent = `${monthNames[month]} ${year}`;
+
+                    // Generate the calendar
+                    generateMonthCalendar(month, year, i + 1);
+
+                    // Update price in footer
+                    document.getElementById(`month${i + 1}-price`).textContent = `From $${baseWeeklyPrice.toFixed(2)} per week`;
+                }
+
+                // Update calendar range display
+                document.getElementById('calendar-range-display').textContent =
+                    `${months[0].month !== months[2].month ? months[0].month + ' ' : ''}${months[0].year} - ${months[2].month} ${months[2].year}`;
+            }
+
+            // Calendar generation function for a specific month
+            function generateMonthCalendar(month, year, calendarIndex) {
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+
+                // Monday is 1, Sunday is 0 in this system (European calendar style)
+                let startingDay = firstDay.getDay() - 1;
+                if (startingDay < 0) startingDay = 6; // If Sunday (0), set to 6
+
+                // Clear previous days
+                const calendarDays = document.getElementById(`calendar-days-${calendarIndex}`);
+                calendarDays.innerHTML = '';
+
+                // Add blank cells for days before start of month
+                for (let i = 0; i < startingDay; i++) {
+                    const blankCell = document.createElement('div');
+                    blankCell.className = 'cal-cell blank';
+                    calendarDays.appendChild(blankCell);
+                }
+
+                // Add days of the month
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const dayCell = document.createElement('div');
+                    const currentDate = new Date(year, month, i, 12, 0, 0); // Use noon to avoid timezone issues
+
+                    // Check if date is in the past
+                    if (currentDate < new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0)) {
+                        dayCell.className = 'cal-cell disabled';
+                    } else {
+                        dayCell.className = 'cal-cell available';
+                        dayCell.setAttribute('data-date', formatDate(currentDate));
+
+                        // Add click event for available days
+                        dayCell.addEventListener('click', function () {
+                            const dateStr = this.getAttribute('data-date');
+                            const clickedDate = new Date(`${dateStr}T12:00:00.000Z`); // Use noon UTC
+
+                            if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+                                // Start new selection
+                                selectedStartDate = clickedDate;
+                                selectedEndDate = null;
+
+                                // Update form input
+                                document.getElementById('start-date').value = dateStr;
+                                document.getElementById('end-date').value = '';
+
+                                // Clear previous selections
+                                document.querySelectorAll('.cal-cell.selected').forEach(cell => {
+                                    cell.classList.remove('selected');
+                                });
+
+                                // Mark as selected
+                                this.classList.add('selected');
+
+                                // Handle immediate update for rental durations
+                                const durationType = document.getElementById('rental-duration').value;
+                                if (durationType === 'SEASONAL') {
+                                    handleSeasonalRental();
+                                } else if (durationType === 'DAILY') {
+                                    // For daily/hourly rentals, we could default to same day if desired
+                                    // but we'll leave it for the user to select the end date
+                                }
+
+                                updateUIState();
+                            } else {
+                                // Complete range selection
+                                if (clickedDate >= selectedStartDate) {
+                                    selectedEndDate = clickedDate;
+                                    document.getElementById('end-date').value = dateStr;
+
+                                    // Mark all days in range as selected
+                                    const cells = document.querySelectorAll('.cal-cell[data-date]');
+                                    cells.forEach(cell => {
+                                        const cellDate = new Date(`${cell.getAttribute('data-date')}T12:00:00.000Z`);
+                                        if (cellDate >= selectedStartDate && cellDate <= selectedEndDate) {
+                                            cell.classList.add('selected');
+                                        }
+                                    });
+
+                                    // Validate the selection based on rental duration
+                                    validateSelection();
+                                } else {
+                                    // If clicked before start date, make it new start date
+                                    selectedStartDate = clickedDate;
+                                    selectedEndDate = null;
+                                    document.getElementById('start-date').value = dateStr;
+                                    document.getElementById('end-date').value = '';
+
+                                    // Clear previous selections
+                                    document.querySelectorAll('.cal-cell.selected').forEach(cell => {
+                                        cell.classList.remove('selected');
+                                    });
+
+                                    // Mark as selected
+                                    this.classList.add('selected');
+                                    updateUIState();
+                                }
+                            }
+                        });
+                    }
+
+                    dayCell.textContent = i;
+                    calendarDays.appendChild(dayCell);
+                }
+
+                // Re-highlight selected dates when calendar month changes
+                if (selectedStartDate && selectedEndDate) {
+                    setTimeout(() => {
+                        highlightSelectedDates();
+                    }, 0);
+                } else if (selectedStartDate) {
+                    setTimeout(() => {
+                        const startDateStr = formatDate(selectedStartDate);
+                        const startCell = document.querySelector(`.cal-cell[data-date="${startDateStr}"]`);
+                        if (startCell) {
+                            startCell.classList.add('selected');
+                        }
+                    }, 0);
+                }
+            }
+
+            // Helper function to highlight selected date range
+            function highlightSelectedDates() {
+                const cells = document.querySelectorAll('.cal-cell[data-date]');
+                cells.forEach(cell => {
+                    const cellDate = new Date(`${cell.getAttribute('data-date')}T12:00:00.000Z`);
+                    if (cellDate >= selectedStartDate && cellDate <= selectedEndDate) {
+                        cell.classList.add('selected');
+                    }
+                });
+            }
+
+            // Initialize all calendars
+            generateCalendars();
+
+            // Month navigation - show previous 3 months
+            document.getElementById('prev-months').addEventListener('click', function () {
+                currentMonth -= 3;
+                if (currentMonth < 0) {
+                    currentYear -= Math.ceil(Math.abs(currentMonth) / 12);
+                    currentMonth = (currentMonth + 12) % 12;
+                }
+                generateCalendars();
+                highlightSelectedDates();
+            });
+
+            // Month navigation - show next 3 months
+            document.getElementById('next-months').addEventListener('click', function () {
+                currentMonth += 3;
+                if (currentMonth > 11) {
+                    currentYear += Math.floor(currentMonth / 12);
+                    currentMonth = currentMonth % 12;
+                }
+                generateCalendars();
+                highlightSelectedDates();
+            });
+
+            // Clear dates button
+            document.getElementById('clear-dates').addEventListener('click', function () {
+                selectedStartDate = null;
+                selectedEndDate = null;
+                document.getElementById('start-date').value = '';
+                document.getElementById('end-date').value = '';
+
+                // Clear selected class from all cells
+                document.querySelectorAll('.cal-cell.selected').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+
+                // Hide date selection info
+                document.getElementById('date-selected-info').classList.add('d-none');
+
+                // Update availability message
+                const availabilityMessage = document.getElementById('availability-message');
+                availabilityMessage.textContent = 'Please select a date range to check availability.';
+                availabilityMessage.classList.remove('alert-success', 'alert-danger');
+                availabilityMessage.classList.add('alert-info');
+
+                // Disable request button
+                document.querySelector('.request-dates-btn').disabled = true;
+            });
+
+            // Duration information
+            const durationInfo = {
+                'DAILY': {
+                    description: 'Daily rental: Rent by the day - perfect for short trips.',
+                    minDays: 1,
+                    maxDays: 6,
+                    message: 'Daily rentals should be between 1 and 6 days.'
+                },
+                'WEEKLY': {
+                    description: 'Weekly rental: Rent by the week - ideal for longer trips.',
+                    minDays: 7,
+                    maxDays: 28,
+                    message: 'Weekly rentals should be at least 7 days and at most 28 days.'
+                },
+                'SEASONAL': {
+                    description: 'Seasonal rental: Rent for an entire season - best for regular, long-term use.',
+                    minDays: 90,
+                    maxDays: 90,
+                    message: 'Seasonal rentals automatically cover 90 days.'
+                }
+            };
+
+            // Format date for display and form submission (YYYY-MM-DD)
+            function formatDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            // Handle rental duration change
+            document.getElementById('rental-duration').addEventListener('change', function () {
+                const durationType = this.value;
+                const descriptionElement = document.getElementById('duration-description');
+                descriptionElement.textContent = durationInfo[durationType].description;
+
+                // // Remove hours selector - we'll use fixed 4-hour blocks for hourly rentals
+                // const hoursSelector = document.getElementById('hours-selector');
+                // hoursSelector.classList.add('d-none');
+
+                // If start date is already selected
+                if (selectedStartDate) {
+                    if (durationType === 'SEASONAL') {
+                        handleSeasonalRental();
+                    } else if (selectedEndDate) {
+                        // Validate existing selection against new duration type
+                        validateSelection();
+                    }
+                }
+
+                // Update pricing display even if dates aren't selected yet
+                updateRentalDetails();
+            });
+
+            // Handle date input changes
+            document.getElementById('start-date').addEventListener('change', function () {
+                if (this.value) {
+                    selectedStartDate = new Date(`${this.value}T12:00:00.000Z`); // Use noon UTC to avoid timezone issues
+
+                    // Handle seasonal rentals immediately
+                    const durationType = document.getElementById('rental-duration').value;
+                    if (durationType === 'SEASONAL') {
+                        handleSeasonalRental();
+                        return;
+                    }
+
+                    // Clear end date if it's before start date
+                    const endDateInput = document.getElementById('end-date');
+                    if (endDateInput.value) {
+                        const endDate = new Date(`${endDateInput.value}T12:00:00.000Z`);
+                        if (endDate < selectedStartDate) {
+                            endDateInput.value = '';
+                            selectedEndDate = null;
+                        } else {
+                            // Validate the selection
+                            validateSelection();
+                        }
+                    }
+
+                    updateUIState();
+                } else {
+                    // Clear start date
+                    selectedStartDate = null;
+                    updateUIState();
+                }
+            });
+
+            document.getElementById('end-date').addEventListener('change', function () {
+                if (this.value && selectedStartDate) {
+                    selectedEndDate = new Date(`${this.value}T12:00:00.000Z`); // Use noon UTC to avoid timezone issues
+
+                    // Ensure end date is not before start date
+                    if (selectedEndDate < selectedStartDate) {
+                        this.value = document.getElementById('start-date').value;
+                        selectedEndDate = new Date(selectedStartDate);
+                    }
+
+                    // Validate the selection
+                    validateSelection();
+                } else {
+                    // Clear end date
+                    selectedEndDate = null;
+                    updateUIState();
+                }
+            });
+
+            // Handle seasonal rental special case
+            function handleSeasonalRental() {
+                if (!selectedStartDate) return;
+
+                // Set end date to 89 days from start date (to make it 90 days inclusive)
+                const seasonEndDate = new Date(selectedStartDate);
+                seasonEndDate.setDate(seasonEndDate.getDate() + 89);
+
+                // Update end date input
+                const endDateInput = document.getElementById('end-date');
+                endDateInput.value = formatDate(seasonEndDate);
+                selectedEndDate = seasonEndDate;
+
+                // Show info message
+                const requirementElement = document.getElementById('duration-requirements');
+                const requirementText = document.getElementById('requirement-text');
+                requirementText.textContent = 'For seasonal rentals, we automatically set a 90-day rental period.';
+                requirementElement.classList.remove('d-none', 'alert-danger');
+                requirementElement.classList.add('alert-info');
+
+                // Always enable the button for seasonal rentals
+                document.querySelector('.request-dates-btn').disabled = false;
+
+                // Update UI
+                updateRentalDetails();
+                updateAvailabilityMessage(true);
+            }
+
+            // Validate selected date range against rental duration requirements
+            function validateSelection() {
+                if (!selectedStartDate || !selectedEndDate) return;
+
+                const durationType = document.getElementById('rental-duration').value;
+                const requirementElement = document.getElementById('duration-requirements');
+                const requirementText = document.getElementById('requirement-text');
+                const addToCartBtn = document.querySelector('.request-dates-btn');
+
+                // Skip validation for seasonal rentals - handled separately
+                if (durationType === 'SEASONAL') {
+                    handleSeasonalRental();
+                    return;
+                }
+
+                // Calculate days between dates (inclusive)
+                const dayCount = calculateDaysBetween(selectedStartDate, selectedEndDate);
+
+                // Check if selected range meets requirements
+                if (dayCount < durationInfo[durationType].minDays || dayCount > durationInfo[durationType].maxDays) {
+                    // Invalid range - show warning
+                    requirementText.textContent = durationInfo[durationType].message;
+                    requirementElement.classList.remove('d-none', 'alert-info');
+                    requirementElement.classList.add('alert-danger');
+                    addToCartBtn.disabled = true;
+                } else {
+                    // Valid range - hide warning
+                    requirementElement.classList.add('d-none');
+                    addToCartBtn.disabled = false;
+                    updateAvailabilityMessage(true);
+                }
+
+                // Update UI
+                updateRentalDetails();
+            }
+
+            // Calculate days between two dates (inclusive)
+            function calculateDaysBetween(startDate, endDate) {
+                const timeDiff = endDate.getTime() - startDate.getTime();
+                return Math.round(timeDiff / (1000 * 3600 * 24)) + 1;
+            }
+
+            // Update UI state based on selected dates
+            function updateUIState() {
+                const dateSelectedInfo = document.getElementById('date-selected-info');
+                const requirementElement = document.getElementById('duration-requirements');
+                const addToCartBtn = document.querySelector('.request-dates-btn');
+
+                if (selectedStartDate && selectedEndDate) {
+                    // Both dates selected - show rental details
+                    dateSelectedInfo.classList.remove('d-none');
+                    updateRentalDetails();
+                } else {
+                    // Not all dates selected - hide rental details
+                    dateSelectedInfo.classList.add('d-none');
+                    addToCartBtn.disabled = true;
+                }
+
+                // Update availability message
+                updateAvailabilityMessage(false);
+            }
+
+            // Update rental details display
+            function updateRentalDetails() {
+                const dateRangeDisplay = document.getElementById('selected-date-range');
+                const daysCountDisplay = document.getElementById('days-count');
+                const totalPriceDisplay = document.getElementById('total-price');
+                const formStartDate = document.getElementById('form-start-date');
+                const formEndDate = document.getElementById('form-end-date');
+                const formRentalDuration = document.getElementById('form-rental-duration');
+                const rentalDurationSelect = document.getElementById('rental-duration');
+                const durationType = rentalDurationSelect.value;
+
+                // Update hidden form fields if dates are selected
+                if (selectedStartDate) {
+                    formStartDate.value = formatDate(selectedStartDate);
+                }
+
+                if (selectedEndDate) {
+                    formEndDate.value = formatDate(selectedEndDate);
+                }
+
+                formRentalDuration.value = durationType;
+
+                // Calculate total price based on duration type
+                let totalPrice = 0;
+
+                // Get base rate for selected duration
+                const ratePrice = getDurationPrice(durationType);
+
+                if (durationType === 'DAILY') {
+                    if (selectedStartDate && selectedEndDate) {
+                        // Calculate days between dates
+                        const dayCount = calculateDaysBetween(selectedStartDate, selectedEndDate);
+                        totalPrice = ratePrice * dayCount;
+                        daysCountDisplay.textContent = `${dayCount} day${dayCount !== 1 ? 's' : ''}`;
+
+                        // Format date display
+                        const options = {month: 'short', day: 'numeric', year: 'numeric'};
+                        const startDateFormatted = selectedStartDate.toLocaleDateString('en-US', options);
+                        const endDateFormatted = selectedEndDate.toLocaleDateString('en-US', options);
+                        dateRangeDisplay.textContent = `${startDateFormatted} - ${endDateFormatted}`;
+                    } else {
+                        // Show single day price as example
+                        totalPrice = ratePrice;
+                    }
+                } else if (durationType === 'WEEKLY') {
+                    if (selectedStartDate&&selectedEndDate) {
+                        // Calculate days between dates
+                        const dayCount = calculateDaysBetween(selectedStartDate, selectedEndDate);
+                        const weeks = Math.ceil(dayCount / 7);
+                        totalPrice = ratePrice * weeks;
+                        daysCountDisplay.textContent = `${weeks} week${weeks !== 1 ? 's' : ''}`;
+
+                        // Format date display
+                        const options = {month: 'short', day: 'numeric', year: 'numeric'};
+                        const startDateFormatted = selectedStartDate.toLocaleDateString('en-US', options);
+                        const endDateFormatted = selectedEndDate.toLocaleDateString('en-US', options);
+                        dateRangeDisplay.textContent = `${startDateFormatted} - ${endDateFormatted}`;
+                    } else {
+                        // Show weekly price as example
+                        totalPrice = ratePrice;
+                    }
+                } else if (durationType === 'SEASONAL') {
+                    // Seasonal is a fixed price
+                    totalPrice = ratePrice;
+
+                    if (selectedStartDate && selectedEndDate) {
+                        daysCountDisplay.textContent = 'Seasonal (90 days)';
+
+                        // Format date display
+                        const options = {month: 'short', day: 'numeric', year: 'numeric'};
+                        const startDateFormatted = selectedStartDate.toLocaleDateString('en-US', options);
+                        const endDateFormatted = selectedEndDate.toLocaleDateString('en-US', options);
+                        dateRangeDisplay.textContent = `${startDateFormatted} - ${endDateFormatted}`;
+                    }
+                }
+
+                // Update price display
+                totalPriceDisplay.textContent = `$${totalPrice.toFixed(2)}`;
+            }
+
+            // Update availability message
+            function updateAvailabilityMessage(isValid) {
+                const availabilityMessage = document.getElementById('availability-message');
+
+                if (selectedStartDate && selectedEndDate) {
+                    if (isValid) {
+                        availabilityMessage.textContent = 'The equipment is available for your selected dates!';
+                        availabilityMessage.classList.remove('alert-info', 'alert-danger');
+                        availabilityMessage.classList.add('alert-success');
+                    } else {
+                        availabilityMessage.textContent = 'Please select a valid date range for the chosen rental duration.';
+                        availabilityMessage.classList.remove('alert-success', 'alert-danger');
+                        availabilityMessage.classList.add('alert-info');
+                    }
+                } else if (selectedStartDate) {
+                    availabilityMessage.textContent = 'Please select an end date to complete your booking.';
+                    availabilityMessage.classList.remove('alert-success', 'alert-danger');
+                    availabilityMessage.classList.add('alert-info');
+                } else {
+                    availabilityMessage.textContent = 'Please select a date range to check availability.';
+                    availabilityMessage.classList.remove('alert-success', 'alert-danger');
+                    availabilityMessage.classList.add('alert-info');
+                }
+            }
+
+            // Get formatted display label for rental duration
+            function getDurationDisplay(duration) {
+                if (duration === 'DAILY') return 'Daily Rate';
+                if (duration === 'WEEKLY') return 'Weekly Rate';
+                if (duration === 'SEASONAL') return 'Seasonal Rate';
+                return 'Daily Rate';
+            }
+
+            // Get price for rental duration
+            function getDurationPrice(duration) {
+                if (duration === 'DAILY') return {{ equipment.rental_price }};
+                if (duration === 'WEEKLY') {
+                    const weeklyRate = {{ equipment.weekly_rate|default:'null' }};
+                    return weeklyRate || {{ equipment.rental_price }} * 5;
+                }
+                if (duration === 'SEASONAL') {
+                    const seasonalRate = {{ equipment.seasonal_rate|default:'null' }};
+                    // Changed from 60 to 90 days for seasonal rate
+                    return seasonalRate || {{ equipment.rental_price }} * 90;
+                }
+                return {{ equipment.rental_price }};
+            }
+        });
+    </script>
+{% endblock %}

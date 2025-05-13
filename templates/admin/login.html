@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/custom_login.css' %}">
+{% endblock %}
+
+{% block bodyclass %}login{% endblock %}
+
+{% block usertools %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div class="login-card">
+    <div class="login-header">
+        <i class="fas fa-snowflake fa-2x mb-2"></i>
+        <h1>{% trans 'SkiRentals Administrator Login' %}</h1>
+        <p class="small text-white-50">This area is for system administrators only.</p>
+        <p class="small text-white-50">Patrons and Librarians should use the main site login.</p>
+    </div>
+
+    {% if form.errors and not form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% blocktrans trimmed %}
+            Please correct the error below.
+            {% endblocktrans %}
+        </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label">
+                {{ form.username.label }}:
+            </label>
+            {{ form.username }}
+        </div>
+        <div class="form-group mb-3">
+            <label for="{{ form.password.id_for_label }}" class="form-label">
+                {{ form.password.label }}:
+            </label>
+            {{ form.password }}
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Log in' %}" class="btn btn-primary w-100 py-2">
+            <input type="hidden" name="next" value="{{ next }}">
+        </div>
+    </form>
+
+    <div class="text-center mt-3 pb-3">
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Return to Main Site
+        </a>
+    </div>
+</div>
+
+{% endblock %} 

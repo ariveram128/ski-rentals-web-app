@@ -1,0 +1,41 @@
+/* Admin interface fixes */
+
+/* Fix for delete button being cut off */
+.delete-button {
+    margin-bottom: 20px !important;
+    padding: 10px 15px !important;
+    height: auto !important;
+    min-height: 35px !important;
+    box-sizing: border-box !important;
+    word-break: normal !important;
+    white-space: normal !important;
+    overflow: visible !important;
+}
+
+/* Make sure all buttons have proper sizing */
+.button, 
+input[type=submit], 
+input[type=button], 
+.submit-row input,
+.submit-row a.deletelink {
+    padding: 10px 15px !important;
+    height: auto !important;
+    line-height: normal !important;
+    min-height: 35px !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+}
+
+/* Fix for submit row spacing */
+.submit-row {
+    padding: 12px 14px !important;
+    margin: 0 0 20px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+.submit-row a.deletelink {
+    display: inline-block !important;
+    margin: 0 !important;
+} 

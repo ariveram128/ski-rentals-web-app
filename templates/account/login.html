@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}Sign In - SkiRentals{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white p-4 text-center">
+                    <h2 class="mb-0">Sign In to SkiRentals</h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if form.errors %}
+                        <div class="alert alert-danger text-center">Invalid Login</div>
+                    {% endif %}
+                    <div class="col-md-12">
+                        <div class="p-3">
+                            <h4 class="text-center mb-4">Sign In with Google</h4>
+                            <div class="d-flex justify-content-center mb-4">
+                                <a href="{% provider_login_url 'google' %}" class="btn btn-lg btn-accent w-50">
+                                    <i class="fab fa-google me-2"></i> Continue with Google
+                                </a>
+                            </div>
+                            <div class="alert alert-info text-center">
+                                <small>First time here? Simply sign in with your Google account to automatically create your SkiRentals account!</small>
+                            </div>
+                        </div>
+                    </div>                
+                    <div class="text-center mt-4">
+                        <p>Don't have a username account?</p>
+                        <a href="{% url 'account_signup' %}" class="btn btn-outline-primary">Sign up</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Bootstrap classes to the form inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('#{{ form.login.id_for_label }}').classList.add('form-control');
+        document.querySelector('#{{ form.password.id_for_label }}').classList.add('form-control');
+    });
+</script>
+{% endblock %}

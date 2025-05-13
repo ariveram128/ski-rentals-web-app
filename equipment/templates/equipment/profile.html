@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.get_full_name|default:profile_user.username }}'s Profile - SkiRentals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3rem 0;
+    }
+    
+    .profile-img-lg {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+    }
+    
+    .profile-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+        border-bottom: 2px solid var(--gray-300);
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .equipment-card {
+        transition: all 0.3s ease;
+    }
+    
+    .equipment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .rental-row {
+        transition: all 0.3s ease;
+    }
+    
+    .rental-row:hover {
+        background-color: var(--gray-100);
+    }
+    
+    .stat-card {
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .stat-info {
+        background-color: var(--info-color);
+        color: white;
+    }
+    
+    .stat-success {
+        background-color: var(--success-color);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Profile Header -->
+    <section class="profile-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center text-md-start mb-4 mb-md-0">
+                    <div class="profile-img-container">
+                        {% if profile_user.userprofile.profile_picture %}
+                        <img src="{{ profile_user.userprofile.profile_picture.url }}" alt="{{ profile_user.username }}" class="profile-img">
+                        {% else %}
+                        <div class="profile-img d-flex align-items-center justify-content-center bg-light">
+                            <i class="fas fa-user fa-4x text-secondary"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <h1 class="mb-2">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                    <p class="mb-1"><i class="fas fa-user me-2"></i>{{ profile_user.username }}</p>
+                    <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ profile_user.email }}</p>
+                    <p class="mb-3"><i class="fas fa-calendar-alt me-2"></i>Member since {{ profile_user.date_joined|date:"F j, Y" }}</p>
+                    
+                    {% if profile.user_type == 'LIBRARIAN' %}
+                        <span class="badge bg-primary">Librarian</span>
+                    {% else %}
+                        <span class="badge bg-info">Patron</span>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-light">
+                            <i class="fas fa-edit me-1"></i> Edit Profile
+                        </a>
+                        <a href="{% url 'patron' %}" class="btn btn-outline-light ms-2">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Profile Content -->
+    <section class="container py-5">
+        <div class="row">
+            <!-- Left Column: Stats and Information -->
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <!-- Profile Stats -->
+                <div class="row">
+                    <div class="col-md-6 col-lg-12">
+                        <div class="stat-card stat-primary text-center">
+                            <i class="fas fa-skiing stat-icon"></i>
+                            <h4 class="mb-0">{{ past_rentals.count }}</h4>
+                            <p class="mb-0">Completed Rentals</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-12">
+                        <div class="stat-card stat-info text-center">
+                            <i class="fas fa-trophy stat-icon"></i>
+                            <h4 class="mb-0">{{ profile.experience_level|default:"N/A" }}</h4>
+                            <p class="mb-0">Experience Level</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-12">
+                        <div class="stat-card stat-success text-center">
+                            <i class="fas fa-calendar-check stat-icon"></i>
+                            <h4 class="mb-0">{{ profile.preferred_rental_duration|default:"N/A" }}</h4>
+                            <p class="mb-0">Preferred Rental</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Personal Info, Preferences, and Rentals -->
+            <div class="col-lg-8">
+                <!-- Personal Information -->
+                <div class="profile-section">
+                    <h3 class="section-title">Personal Information</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <p class="text-muted mb-0">Full Name</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="mb-0">{{ profile_user.get_full_name|default:"Not provided" }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <p class="text-muted mb-0">Email</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="mb-0">{{ profile_user.email }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <p class="text-muted mb-0">Phone</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="mb-0">{{ profile.phone_number|default:"Not provided" }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="text-muted mb-0">Address</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="mb-0">{{ profile.address|linebreaks|default:"Not provided" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Skiing/Snowboarding Information -->
+                <div class="profile-section">
+                    <h3 class="section-title">Skiing/Snowboarding Information</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-4">
+                                    <p class="text-muted mb-0">Height</p>
+                                    <p class="mb-0">{{ profile.height|default:"Not provided" }}</p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <p class="text-muted mb-0">Weight</p>
+                                    <p class="mb-0">{{ profile.weight|default:"Not provided" }}</p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <p class="text-muted mb-0">Boot Size</p>
+                                    <p class="mb-0">{{ profile.boot_size|default:"Not provided" }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-sm-4">
+                                    <p class="text-muted mb-0">Experience Level</p>
+                                    <p class="mb-0">
+                                        {% if profile.experience_level == 'BEGINNER' %}
+                                            <span class="badge bg-success">Beginner</span>
+                                        {% elif profile.experience_level == 'INTERMEDIATE' %}
+                                            <span class="badge bg-info">Intermediate</span>
+                                        {% elif profile.experience_level == 'ADVANCED' %}
+                                            <span class="badge bg-warning">Advanced</span>
+                                        {% elif profile.experience_level == 'EXPERT' %}
+                                            <span class="badge bg-danger">Expert</span>
+                                        {% else %}
+                                            Not specified
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <p class="text-muted mb-0">Preferred Activity</p>
+                                    <p class="mb-0">
+                                        {% if profile.preferred_activity == 'SKIING' %}
+                                            <i class="fas fa-skiing me-1"></i> Skiing
+                                        {% elif profile.preferred_activity == 'SNOWBOARDING' %}
+                                            <i class="fas fa-snowboarding me-1"></i> Snowboarding
+                                        {% elif profile.preferred_activity == 'BOTH' %}
+                                            <i class="fas fa-skiing me-1"></i><i class="fas fa-snowboarding me-1"></i> Both
+                                        {% else %}
+                                            Not specified
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-sm-4">
+                                    <p class="text-muted mb-0">Preferred Terrain</p>
+                                    <p class="mb-0">
+                                        {% if profile.preferred_terrain %}
+                                            {{ profile.get_preferred_terrain_display }}
+                                        {% else %}
+                                            Not specified
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rental Preferences -->
+                <div class="profile-section">
+                    <h3 class="section-title">Rental Preferences</h3>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <p class="text-muted mb-0">Preferred Rental Duration</p>
+                                    <p class="mb-0">
+                                        {% if profile.preferred_rental_duration %}
+                                            {{ profile.get_preferred_rental_duration_display }}
+                                        {% else %}
+                                            Not specified
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <p class="text-muted mb-0">Insurance Preference</p>
+                                    <p class="mb-0">
+                                        {% if profile.insurance_preference %}
+                                            {{ profile.get_insurance_preference_display }}
+                                        {% else %}
+                                            Ask each time
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-12">
+                                    <p class="text-muted mb-2">Notification Preferences</p>
+                                    <div>
+                                        {% if profile.receive_email_reminders %}
+                                            <span class="badge bg-success me-2"><i class="fas fa-check me-1"></i> Email Reminders</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary me-2"><i class="fas fa-times me-1"></i> Email Reminders</span>
+                                        {% endif %}
+                                        
+                                        {% if profile.receive_sms_reminders %}
+                                            <span class="badge bg-success me-2"><i class="fas fa-check me-1"></i> SMS Reminders</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary me-2"><i class="fas fa-times me-1"></i> SMS Reminders</span>
+                                        {% endif %}
+                                        
+                                        {% if profile.receive_marketing_emails %}
+                                            <span class="badge bg-success me-2"><i class="fas fa-check me-1"></i> Marketing Emails</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary me-2"><i class="fas fa-times me-1"></i> Marketing Emails</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Equipment Recommendations -->
+                {% if recommended_equipment %}
+                <div class="profile-section">
+                    <h3 class="section-title">Recommended Equipment</h3>
+                    <div class="row">
+                        {% for equipment in recommended_equipment %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card equipment-card h-100">
+                                <div class="card-body text-center">
+                                    {% if equipment.equipment_type == 'SKI' %}
+                                    <i class="fas fa-skiing fa-3x text-primary mb-3"></i>
+                                    {% elif equipment.equipment_type == 'SNOWBOARD' %}
+                                    <i class="fas fa-snowboarding fa-3x text-primary mb-3"></i>
+                                    {% else %}
+                                    <i class="fas fa-snowflake fa-3x text-primary mb-3"></i>
+                                    {% endif %}
+                                    <h5>{{ equipment.brand }} {{ equipment.model }}</h5>
+                                    <p class="text-muted">{{ equipment.size }}</p>
+                                    <div class="mb-2">
+                                        <span class="badge bg-success">{{ equipment.get_recommended_skill_level_display }}</span>
+                                    </div>
+                                    <a href="{% url 'equipment:quick_rent' equipment.id %}" class="btn btn-sm btn-primary">Quick Rent</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Recent Rentals -->
+                {% if past_rentals %}
+                <div class="profile-section">
+                    <h3 class="section-title">Recent Rentals</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Equipment</th>
+                                    <th>Date</th>
+                                    <th>Duration</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rental in past_rentals %}
+                                <tr class="rental-row">
+                                    <td>{{ rental.equipment.brand }} {{ rental.equipment.model }}</td>
+                                    <td>{{ rental.checkout_date|date:"M d, Y" }}</td>
+                                    <td>{{ rental.get_rental_duration_display }}</td>
+                                    <td>
+                                        <a href="{% url 'equipment:quick_rent' rental.equipment.id %}" class="btn btn-sm btn-primary">Rent Again</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endblock %} 

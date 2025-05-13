@@ -1,0 +1,1065 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}SkiRentals - Browse Equipment{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css"/>
+    <style>
+        .filter-sidebar {
+            position: sticky;
+            top: 1rem;
+            height: auto;
+            max-height: none; /* Remove max-height constraint */
+            overflow-y: visible; /* Change from auto to visible */
+            padding-right: 10px;
+        }
+
+        /* Section styling */
+        .filter-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .filter-section h5 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+
+        .form-check-input {
+            opacity: 1 !important;
+            position: static !important; /* Change from absolute to static */
+            margin-right: 8px !important;
+            width: auto !important;
+            height: auto !important;
+            display: inline-block !important;
+            visibility: visible !important;
+            z-index: 10 !important;
+        }
+
+        /* Make labels appear properly next to checkboxes */
+        .form-check-label {
+            display: inline-block !important;
+        }
+
+        /* Reset the form-check to standard styling */
+        .form-check {
+            padding-left: 0 !important;
+        }
+
+        /* Price range slider */
+        .price-range-container {
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .price-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Fix for checkboxes */
+        .filter-section .form-check {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-left: 0 !important;
+        }
+
+        .filter-section .form-check-input {
+            position: static !important;
+            margin-top: 0 !important;
+            margin-right: 0.5rem !important;
+            width: 16px !important;
+            height: 16px !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: auto !important;
+            flex-shrink: 0;
+        }
+
+        .filter-section .form-check-label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        /* Make size filter container visible */
+        #size-filter-container {
+            display: none;
+        }
+
+        body.has-equipment-type #size-filter-container {
+            display: block;
+        }
+
+        /* Ensure size groups are initially hidden */
+        .size-group {
+            display: none;
+        }
+
+        /* noUiSlider customization */
+        #price-slider {
+            margin: 20px 10px 30px 10px;
+            height: 10px;
+        }
+
+        .noUi-connect {
+            background: var(--primary-color, #1a2980);
+        }
+
+        .noUi-handle {
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 50% !important;
+            background-color: var(--primary-color, #1a2980) !important;
+            border: 2px solid white !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            cursor: pointer !important;
+        }
+
+        .noUi-handle:before, .noUi-handle:after {
+            display: none;
+        }
+
+        .noUi-tooltip {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            top: -30px !important; /* Move tooltips higher */
+            transform: translate(-50%, 0) !important;
+        }
+
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Popular equipment section styling */
+        .popular-equipment-section {
+            display: block !important; /* Always show this section */
+            position: relative !important;
+            z-index: 10 !important;
+        }
+
+        .popular-equipment-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+            gap: 1.5rem !important;
+        }
+
+        .popular-equipment-card {
+            display: block !important; /* Always show popular equipment cards */
+        }
+
+        @media (max-width: 768px) {
+            .equipment-grid, .popular-equipment-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hide filtered equipment */
+        .equipment-card.filtered {
+            display: none;
+        }
+
+        /* Loading overlay for search */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+        }
+
+        .loading-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color, #1a2980);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {# Display Django messages (success/error) #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Equipment Catalog Header -->
+    <section class="bg-primary text-white py-4 mb-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <!-- Title Column -->
+                <div class="col-md-4">
+                    <h1>Browse Equipment</h1>
+                    <p class="lead mb-2">Find the perfect gear for your next adventure</p>
+                </div>
+
+                <!-- Add Equipment Button (Only for Librarians) -->
+                <div class="col-md-4 text-center">
+                    {% if user.is_authenticated and user.userprofile.user_type == 'LIBRARIAN' %}
+                        <a href="{% url 'equipment:add_equipment' %}" class="btn btn-light">
+                            <i class="fas fa-plus-circle me-2"></i>Add Equipment
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- Search Column -->
+                <div class="col-md-4">
+                    <form id="search-form" method="GET" action="{% url 'equipment:index' %}">
+                        <div class="input-group mt-3 mt-md-0">
+                            <input type="text" id="search-input" name="search" class="form-control"
+                                   placeholder="Search equipment..." value="{{ request.GET.search|default:'' }}">
+                            <button class="btn btn-accent" id="search-button" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <!-- Hidden inputs for all filters - will be populated by JS -->
+                        <input type="hidden" id="form-type" name="type" value="{{ selected_types }}">
+                        <input type="hidden" id="form-min-price" name="min_price" value="{{ min_price|default:'0' }}">
+                        <input type="hidden" id="form-max-price" name="max_price" value="{{ max_price|default:'100' }}">
+                        <input type="hidden" id="form-skill-level" name="skill_level"
+                               value="{{ selected_skill_level }}">
+                        <input type="hidden" id="form-sort" name="sort" value="{{ sort_by|default:'newest' }}">
+                        <!-- For checkboxes we need multiple inputs that will be added dynamically -->
+                        <div id="dynamic-hidden-inputs"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Equipment Catalog -->
+    <section class="container mb-5">
+        <div class="row g-4">
+            <!-- Filters Sidebar -->
+            <div class="col-lg-3">
+                <div class="filter-sidebar">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Filters</h4>
+                        <button type="button" id="reset-filters" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-redo-alt me-1"></i>Reset
+                        </button>
+                    </div>
+
+                    <!-- Equipment Type Filter -->
+                    <div class="filter-section">
+                        <h5><i class="fas fa-skiing me-2"></i>Equipment Type</h5>
+                        <select class="form-select mb-2" id="equipment-type">
+                            <option value="">All Equipment</option>
+                            {% for type_code, type_name in equipment_types %}
+                                <option value="{{ type_code }}"
+                                        {% if type_code in selected_types %}selected{% endif %}>{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Ski Subtype (only visible when Ski is selected) -->
+                        <div id="ski-subtype-container" class="mt-3"
+                             {% if 'SKI' not in selected_types %}style="display:none"{% endif %}>
+                            <h6 class="mb-2">Ski Type</h6>
+                            {% for subtype_code, subtype_name in ski_subtypes %}
+                                <div class="form-check">
+                                    <input class="form-check-input ski-subtype" type="checkbox"
+                                           id="ski-subtype-{{ subtype_code|lower }}" value="{{ subtype_code }}"
+                                           {% if subtype_code in selected_subtypes %}checked{% endif %}>
+                                    <label class="form-check-label" for="ski-subtype-{{ subtype_code|lower }}">
+                                        {{ subtype_name }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Size Filter (dynamically changes based on equipment type) -->
+                    <div class="filter-section" id="size-filter-container"
+                         {% if not selected_types %}style="display:none"{% endif %}>
+                        <h5><i class="fas fa-ruler me-2"></i>Size</h5>
+
+                        <!-- Ski Sizes -->
+                        <div class="size-group" id="ski-sizes"
+                             {% if 'SKI' not in selected_types %}style="display:none"{% endif %}>
+                            {% for size in ski_size_ranges %}
+                                <div class="form-check">
+                                    <input class="form-check-input size-checkbox" type="checkbox" name="size"
+                                           id="ski-size-{{ forloop.counter }}" value="{{ size.range }}"
+                                           {% if size.range in selected_sizes %}checked{% endif %}>
+                                    <label class="form-check-label" for="ski-size-{{ forloop.counter }}">
+                                        {{ size.display }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Snowboard Sizes -->
+                        <div class="size-group" id="snowboard-sizes"
+                             {% if 'SNOWBOARD' not in selected_types %}style="display:none"{% endif %}>
+                            {% for size in snowboard_size_ranges %}
+                                <div class="form-check">
+                                    <input class="form-check-input size-checkbox" type="checkbox" name="size"
+                                           id="snowboard-size-{{ forloop.counter }}" value="{{ size.range }}"
+                                           {% if size.range in selected_sizes %}checked{% endif %}>
+                                    <label class="form-check-label" for="snowboard-size-{{ forloop.counter }}">
+                                        {{ size.display }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Boot Sizes -->
+                        <div class="size-group" id="boot-sizes"
+                             {% if 'BOOTS' not in selected_types %}style="display:none"{% endif %}>
+                            {% for size in boot_size_ranges %}
+                                <div class="form-check">
+                                    <input class="form-check-input size-checkbox" type="checkbox" name="size"
+                                           id="boot-size-{{ forloop.counter }}" value="{{ size.range }}"
+                                           {% if size.range in selected_sizes %}checked{% endif %}>
+                                    <label class="form-check-label" for="boot-size-{{ forloop.counter }}">
+                                        {{ size.display }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Pole Sizes -->
+                        <div class="size-group" id="pole-sizes"
+                             {% if 'POLES' not in selected_types %}style="display:none"{% endif %}>
+                            {% for size in pole_size_ranges %}
+                                <div class="form-check">
+                                    <input class="form-check-input size-checkbox" type="checkbox" name="size"
+                                           id="pole-size-{{ forloop.counter }}" value="{{ size.range }}"
+                                           {% if size.range in selected_sizes %}checked{% endif %}>
+                                    <label class="form-check-label" for="pole-size-{{ forloop.counter }}">
+                                        {{ size.display }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Standard Sizes for apparel -->
+                        <div class="size-group" id="standard-sizes"
+                             {% if not show_standard_sizes %}style="display:none"{% endif %}>
+                            {% for size in standard_sizes %}
+                                <div class="form-check">
+                                    <input class="form-check-input size-checkbox" type="checkbox" name="size"
+                                           id="size-{{ size|lower }}" value="{{ size }}"
+                                           {% if size in selected_sizes %}checked{% endif %}>
+                                    <label class="form-check-label" for="size-{{ size|lower }}">
+                                        {{ size }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Skill Level Filter -->
+                    <div class="filter-section">
+                        <h5><i class="fas fa-chart-line me-2"></i>Skill Level</h5>
+                        <select class="form-select" id="skill-level">
+                            <option value="">All Levels</option>
+                            <option value="BEGINNER" {% if "BEGINNER" == selected_skill_level %}selected{% endif %}>
+                                Beginner
+                            </option>
+                            <option value="INTERMEDIATE"
+                                    {% if "INTERMEDIATE" == selected_skill_level %}selected{% endif %}>Intermediate
+                            </option>
+                            <option value="ADVANCED" {% if "ADVANCED" == selected_skill_level %}selected{% endif %}>
+                                Advanced
+                            </option>
+                            <option value="EXPERT" {% if "EXPERT" == selected_skill_level %}selected{% endif %}>Expert
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Condition Filter -->
+                    <div class="filter-section">
+                        <h5><i class="fas fa-star me-2"></i>Condition</h5>
+                        {% for condition_code, condition_name in condition_choices %}
+                            <div class="form-check">
+                                <input class="form-check-input condition-checkbox" type="checkbox"
+                                       id="condition-{{ condition_code|lower }}" value="{{ condition_code }}"
+                                       {% if condition_code in selected_conditions %}checked{% endif %}>
+                                <label class="form-check-label" for="condition-{{ condition_code|lower }}">
+                                    {{ condition_name }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Price Range Filter -->
+                    <div class="filter-section">
+                        <h5><i class="fas fa-dollar-sign me-2"></i>Price Range</h5>
+                        <div class="price-range-container">
+                            <div class="price-display">
+                                <span>$<span id="min-price-display">{{ min_price|default:'0' }}</span></span>
+                                <span>$<span
+                                        id="max-price-display">{{ max_price|default:'100' }}</span>{% if max_price != '100' %}{% else %}
+                                    +{% endif %}</span>
+                            </div>
+
+                            <!-- noUiSlider will be initialized here -->
+                            <div id="price-slider"></div>
+                        </div>
+                    </div>
+
+                    <!-- Availability Filter -->
+                    <div class="filter-section">
+                        <h5><i class="fas fa-check-circle me-2"></i>Availability</h5>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="available-only"
+                                   {% if available_only %}checked{% endif %}>
+                            <label class="form-check-label" for="available-only">
+                                Show available items only
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment Cards -->
+            <div class="col-lg-9">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <p class="mb-0"><span id="result-count">{{ equipment_list|length }}</span> items found</p>
+                    <div class="d-flex align-items-center">
+                        <label for="sort-select" class="me-2">Sort by:</label>
+                        <select class="form-select form-select-sm" id="sort-select" style="width: auto;">
+                            <option value="newest" {% if sort_by == 'newest' or not sort_by %}selected{% endif %}>
+                                Newest
+                            </option>
+                            <option value="price-low" {% if sort_by == 'price-low' %}selected{% endif %}>Price: Low to
+                                High
+                            </option>
+                            <option value="price-high" {% if sort_by == 'price-high' %}selected{% endif %}>Price: High
+                                to Low
+                            </option>
+                            <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Rating</option>
+                        </select>
+                    </div>
+                </div>
+
+                {% if equipment_list %}
+                    <div class="equipment-grid main-equipment-grid" id="equipment-grid">
+                        {% for equipment in equipment_list %}
+                            <div class="card equipment-card main-catalog-card position-relative"
+                                 data-type="{{ equipment.equipment_type }}"
+                                 data-subtype="{{ equipment.equipment_subtype|default:'' }}"
+                                 data-skill-level="{{ equipment.recommended_skill_level|default:'' }}"
+                                 data-size="{{ equipment.size }}"
+                                 data-price="{{ equipment.rental_price }}"
+                                 data-condition="{{ equipment.condition }}"
+                                 data-available="{{ equipment.is_available|lower }}"
+                                 data-date="{{ equipment.date_added|date:'U' }}">
+                                <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>
+                                {% if equipment.recommended_skill_level %}
+                                    <span class="skill-level">{{ equipment.get_recommended_skill_level_display }}</span>
+                                {% endif %}
+                                {% if equipment.main_image %}
+                                    <img src="{{ equipment.main_image.url }}" class="card-img-top"
+                                         alt="{{ equipment.brand }} {{ equipment.model }}">
+                                {% else %}
+                                    {% with first_image=equipment.images.first %}
+                                        {% if first_image %}
+                                            <img src="{{ first_image.image.url }}" class="card-img-top"
+                                                 alt="{{ equipment.brand }} {{ equipment.model }}">
+                                        {% else %}
+                                            <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}"
+                                                 class="card-img-top" alt="{{ equipment.brand }} {{ equipment.model }}">
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ equipment.brand }} {{ equipment.model }}</h5>
+                                    <p class="card-brand d-none">{{ equipment.brand }}</p>
+                                    <p class="card-model d-none">{{ equipment.model }}</p>
+                                    <p class="card-text">Size: {{ equipment.size }}</p>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-bold text-primary">${{ equipment.rental_price }}/day</span>
+                                        <div class="star-rating">
+                                            <!-- Generate stars based on average_rating -->
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= equipment.average_rating|floatformat:0|add:"0" %}
+                                                    <i class="fas fa-star"></i>
+                                                {% elif forloop.counter <= equipment.average_rating|floatformat:1|add:"0.5" %}
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="ms-1">{{ equipment.average_rating }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex mt-3">
+                                        <a href="{% url 'equipment:detail' equipment.id %}"
+                                           class="btn btn-primary flex-grow-1 me-2">View Details</a>
+                                        {% if equipment.is_available %}
+                                            <a href="{% url 'equipment:quick_rent' equipment.id %}"
+                                               class="btn btn-accent">
+                                                <i class="fas fa-shopping-cart"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-secondary" disabled>
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if not equipment.is_available %}
+                                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                                         style="background-color: rgba(0,0,0,0.5); z-index: 2; border-radius: 0.5rem;">
+                                        <span class="badge bg-danger p-2">Currently Unavailable</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No equipment found matching your criteria.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Most Popular Equipment Section - Moved to bottom for better professional appearance -->
+    <section class="bg-light py-5 popular-equipment-section mt-5">
+        <div class="container">
+            <h2 class="text-center mb-4">Most Popular Available Equipment</h2>
+            {% if top_rated %}
+                <div class="popular-equipment-grid">
+                    {% for equipment in top_rated %}
+                        <div class="card equipment-card popular-equipment-card position-relative">
+                            <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>
+                            {% if equipment.recommended_skill_level %}
+                                <span class="skill-level">{{ equipment.get_recommended_skill_level_display }}</span>
+                            {% endif %}
+                            {% if equipment.main_image %}
+                                <img src="{{ equipment.main_image.url }}" class="card-img-top"
+                                     alt="{{ equipment.brand }} {{ equipment.model }}">
+                            {% else %}
+                                {% with first_image=equipment.images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" class="card-img-top"
+                                             alt="{{ equipment.brand }} {{ equipment.model }}">
+                                    {% else %}
+                                        <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}"
+                                             class="card-img-top" alt="{{ equipment.brand }} {{ equipment.model }}">
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+
+                            <div class="card-body">
+                                <h5 class="card-title">{{ equipment.brand }} {{ equipment.model }}</h5>
+                                <p class="card-text">Size: {{ equipment.size }}</p>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-primary">${{ equipment.rental_price }}/day</span>
+                                    <div class="star-rating">
+                                        <!-- Generate stars based on average_rating -->
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= equipment.average_rating|floatformat:0|add:"0" %}
+                                                <i class="fas fa-star"></i>
+                                            {% elif forloop.counter <= equipment.average_rating|floatformat:1|add:"0.5" %}
+                                                <i class="fas fa-star-half-alt"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-1">{{ equipment.average_rating }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-3">
+                                    <a href="{% url 'equipment:detail' equipment.id %}"
+                                       class="btn btn-primary flex-grow-1 me-2">View Details</a>
+                                    {% if equipment.is_available %}
+                                        <a href="{% url 'cart' %}" class="btn btn-accent">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary" disabled>
+                                            <i class="fas fa-clock"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if not equipment.is_available %}
+                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                                     style="background-color: rgba(0,0,0,0.5); z-index: 2; border-radius: 0.5rem;">
+                                    <span class="badge bg-danger p-2">Currently Unavailable</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+    <script>
+        console.log("Equipment filter script loading...");
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM fully loaded, initializing filters...");
+
+            // Filter elements
+            const equipmentType = document.getElementById('equipment-type');
+            const skiSubtypeContainer = document.getElementById('ski-subtype-container');
+            const skiSubtypes = document.querySelectorAll('.ski-subtype');
+            const sizeFilterContainer = document.getElementById('size-filter-container');
+            const sizeGroups = document.querySelectorAll('.size-group');
+            const skillLevel = document.getElementById('skill-level');
+            const conditionCheckboxes = document.querySelectorAll('.condition-checkbox');
+            const availableOnly = document.getElementById('available-only');
+            const sortSelect = document.getElementById('sort-select');
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const resetButton = document.getElementById('reset-filters');
+            const searchForm = document.getElementById('search-form');
+            const equipmentCards = document.querySelectorAll('.equipment-card');
+            const resultCount = document.getElementById('result-count');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const dynamicInputsContainer = document.getElementById('dynamic-hidden-inputs');
+
+            // Hidden form inputs
+            const formType = document.getElementById('form-type');
+            const formMinPrice = document.getElementById('form-min-price');
+            const formMaxPrice = document.getElementById('form-max-price');
+            const formSkillLevel = document.getElementById('form-skill-level');
+            const formSort = document.getElementById('form-sort');
+
+            // Price slider variables
+            let priceSlider;
+            let minPrice = parseInt("{{ min_price|default:'0' }}") || 0;
+            let maxPrice = parseInt("{{ max_price|default:'100' }}") || 100;
+
+            // Make size filter container visible when equipment type is selected
+            if (equipmentType && equipmentType.value) {
+                document.body.classList.add('has-equipment-type');
+                if (sizeFilterContainer) {
+                    sizeFilterContainer.style.display = 'block';
+                }
+            }
+
+            // Initialize UI based on current selection
+            if (equipmentType && equipmentType.value) {
+                console.log("Initial equipment type:", equipmentType.value);
+                updateSizeFiltersVisibility(equipmentType.value);
+            }
+
+            // Initialize noUiSlider for price range
+            initPriceSlider();
+
+            // Event listeners for filter changes
+            if (equipmentType) {
+                equipmentType.addEventListener('change', function () {
+                    // Clear size checkboxes when equipment type changes
+                    document.querySelectorAll('.size-checkbox:checked').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+
+                    // Clear ski subtypes when switching away from SKI
+                    if (this.value !== 'SKI') {
+                        skiSubtypes.forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+                    }
+
+                    updateSizeFiltersVisibility(this.value);
+                    applyFilters();
+                });
+            }
+
+            // Add event listeners to all filter controls
+            skiSubtypes.forEach(checkbox => checkbox.addEventListener('change', applyFilters));
+            document.querySelectorAll('.size-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', applyFilters);
+            });
+
+            if (skillLevel) skillLevel.addEventListener('change', applyFilters);
+            conditionCheckboxes.forEach(checkbox => checkbox.addEventListener('change', applyFilters));
+            if (availableOnly) availableOnly.addEventListener('change', applyFilters);
+            if (sortSelect) sortSelect.addEventListener('change', applyFilters);
+
+            // Reset filters button sends to backend with no filters
+            if (resetButton) {
+                resetButton.addEventListener('click', function () {
+                    // Show loading overlay
+                    loadingOverlay.classList.add('active');
+                    // Redirect to base equipment URL without params
+                    window.location.href = '{% url "equipment:index" %}';
+                });
+            }
+
+            // Submit search form when search button is clicked
+            if (searchForm) {
+                searchForm.addEventListener('submit', function (e) {
+                    // Show loading overlay
+                    loadingOverlay.classList.add('active');
+
+                    // Clear previous dynamic inputs
+                    dynamicInputsContainer.innerHTML = '';
+
+                    // Get all current filter values
+                    const filters = getSelectedFilters();
+
+                    // Update hidden inputs with current filter values
+                    formType.value = filters.type;
+                    formMinPrice.value = filters.minPrice;
+                    formMaxPrice.value = filters.maxPrice;
+                    formSkillLevel.value = filters.skillLevel;
+                    formSort.value = filters.sort;
+
+                    // Add ski subtypes as multiple hidden inputs
+                    filters.skiSubtypes.forEach(subtype => {
+                        addHiddenInput('ski_subtype', subtype);
+                    });
+
+                    // Add sizes as multiple hidden inputs
+                    filters.sizes.forEach(size => {
+                        addHiddenInput('size', size);
+                    });
+
+                    // Add conditions as multiple hidden inputs
+                    filters.conditions.forEach(condition => {
+                        addHiddenInput('condition', condition);
+                    });
+
+                    // Add availability
+                    if (filters.availableOnly) {
+                        addHiddenInput('available_only', 'true');
+                    }
+                });
+            }
+
+            // Also trigger search when Enter is pressed in the search box
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        // Form will be submitted by browser default behavior
+                    }
+                });
+            }
+
+            // Helper function to add hidden inputs for form submission
+            function addHiddenInput(name, value) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                dynamicInputsContainer.appendChild(input);
+            }
+
+            // Function to update size filters visibility without submitting form
+            function updateSizeFiltersVisibility(selectedType) {
+                if (selectedType) {
+                    document.body.classList.add('has-equipment-type');
+                } else {
+                    document.body.classList.remove('has-equipment-type');
+                }
+
+                // Show size filter container
+                if (sizeFilterContainer) {
+                    sizeFilterContainer.style.display = selectedType ? 'block' : 'none';
+                }
+
+                // Hide all size groups first
+                sizeGroups.forEach(group => {
+                    if (group) {
+                        group.style.display = 'none';
+                    }
+                });
+
+                // Show/hide ski subtype container
+                if (skiSubtypeContainer) {
+                    skiSubtypeContainer.style.display = selectedType === 'SKI' ? 'block' : 'none';
+                }
+
+                // Show appropriate size group based on selection
+                if (selectedType === 'SKI') {
+                    const skiSizes = document.getElementById('ski-sizes');
+                    if (skiSizes) skiSizes.style.display = 'block';
+                } else if (selectedType === 'SNOWBOARD') {
+                    const snowboardSizes = document.getElementById('snowboard-sizes');
+                    if (snowboardSizes) snowboardSizes.style.display = 'block';
+                } else if (selectedType === 'BOOTS') {
+                    const bootSizes = document.getElementById('boot-sizes');
+                    if (bootSizes) bootSizes.style.display = 'block';
+                } else if (selectedType === 'POLES') {
+                    const poleSizes = document.getElementById('pole-sizes');
+                    if (poleSizes) poleSizes.style.display = 'block';
+                } else if (['HELMET', 'GOGGLES', 'GLOVES', 'JACKET', 'PANTS'].includes(selectedType)) {
+                    const standardSizes = document.getElementById('standard-sizes');
+                    if (standardSizes) standardSizes.style.display = 'block';
+                }
+            }
+
+            // Apply all filters to the equipment cards
+            function applyFilters() {
+                const filters = getSelectedFilters();
+                let visibleCount = 0;
+
+                // Apply filters to each card
+                equipmentCards.forEach(card => {
+                    const isVisible =
+                        matchesType(card, filters.type) &&
+                        matchesSubtype(card, filters.skiSubtypes) &&
+                        matchesSize(card, filters.sizes) &&
+                        matchesSkillLevel(card, filters.skillLevel) &&
+                        matchesCondition(card, filters.conditions) &&
+                        matchesPrice(card, filters.minPrice, filters.maxPrice) &&
+                        matchesAvailability(card, filters.availableOnly);
+
+                    // Toggle visibility class
+                    if (isVisible) {
+                        card.classList.remove('filtered');
+                        visibleCount++;
+                    } else {
+                        card.classList.add('filtered');
+                    }
+                });
+
+                // Update the result count
+                if (resultCount) {
+                    resultCount.textContent = visibleCount;
+                }
+
+                // Apply sorting
+                sortEquipment(filters.sort);
+            }
+
+            // Filter matching functions
+            function matchesType(card, type) {
+                if (!type) return true;
+                return card.dataset.type === type;
+            }
+
+            function matchesSubtype(card, subtypes) {
+                if (!subtypes || subtypes.length === 0) return true;
+
+                // If it's not a ski, it shouldn't match ski subtypes
+                if (card.dataset.type !== 'SKI') return false;
+
+                return subtypes.includes(card.dataset.subtype);
+            }
+
+            function matchesSize(card, sizes) {
+                if (!sizes || sizes.length === 0) return true;
+
+                const cardSize = card.dataset.size;
+
+                // For categorical sizes (S, M, L, etc)
+                if (sizes.includes(cardSize)) return true;
+
+                // For numerical ranges (e.g., '100-129')
+                const numericSize = parseFloat(cardSize);
+                if (isNaN(numericSize)) return false;
+
+                return sizes.some(sizeRange => {
+                    if (!sizeRange.includes('-')) return false;
+
+                    const [min, max] = sizeRange.split('-').map(Number);
+                    return numericSize >= min && numericSize <= max;
+                });
+            }
+
+            function matchesSkillLevel(card, skillLevel) {
+                if (!skillLevel) return true;
+                return card.dataset.skillLevel === skillLevel || card.dataset.skillLevel === 'ALL';
+            }
+
+            function matchesCondition(card, conditions) {
+                if (!conditions || conditions.length === 0) return true;
+                return conditions.includes(card.dataset.condition);
+            }
+
+            function matchesPrice(card, minPrice, maxPrice) {
+                const price = parseFloat(card.dataset.price);
+                if (isNaN(price)) return true;
+
+                return price >= minPrice && (maxPrice === 100 || price <= maxPrice);
+            }
+
+            function matchesAvailability(card, availableOnly) {
+                if (!availableOnly) return true;
+                return card.dataset.available === 'true';
+            }
+
+            // Sort equipment cards
+            function sortEquipment(sortBy) {
+                const gridContainer = document.getElementById('equipment-grid');
+                if (!gridContainer) return;
+
+                const cards = Array.from(gridContainer.children);
+
+                cards.sort((a, b) => {
+                    if (sortBy === 'price-low') {
+                        return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                    } else if (sortBy === 'price-high') {
+                        return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                    } else if (sortBy === 'rating') {
+                        // Extract rating from star-rating span
+                        const aRating = parseFloat(a.querySelector('.star-rating span').textContent);
+                        const bRating = parseFloat(b.querySelector('.star-rating span').textContent);
+                        return bRating - aRating;
+                    } else {
+                        // Default to newest (by date_added timestamp)
+                        return parseInt(b.dataset.date) - parseInt(a.dataset.date);
+                    }
+                });
+
+                // Re-append cards in the sorted order
+                cards.forEach(card => {
+                    gridContainer.appendChild(card);
+                });
+            }
+
+            // Get all selected filter values
+            function getSelectedFilters() {
+                return {
+                    type: equipmentType ? equipmentType.value : '',
+                    skiSubtypes: Array.from(document.querySelectorAll('.ski-subtype:checked')).map(e => e.value),
+                    sizes: Array.from(document.querySelectorAll('.size-checkbox:checked')).map(e => e.value),
+                    skillLevel: skillLevel ? skillLevel.value : '',
+                    conditions: Array.from(document.querySelectorAll('.condition-checkbox:checked')).map(e => e.value),
+                    minPrice: minPrice,
+                    maxPrice: maxPrice,
+                    availableOnly: availableOnly ? availableOnly.checked : false,
+                    sort: sortSelect ? sortSelect.value : 'newest'
+                };
+            }
+
+            // Initialize noUiSlider for price range
+            function initPriceSlider() {
+                const priceSliderElement = document.getElementById('price-slider');
+                if (!priceSliderElement) {
+                    console.log("Price slider element not found, skipping initialization");
+                    return;
+                }
+
+                // Create the slider with noUiSlider
+                priceSlider = noUiSlider.create(priceSliderElement, {
+                    start: [minPrice, maxPrice],
+                    connect: true,
+                    range: {
+                        'min': 0,
+                        'max': 100
+                    },
+                    step: 1,
+                    tooltips: [
+                        {
+                            to: value => '$' + parseInt(value),
+                            from: value => parseInt(value.replace('$', ''))
+                        },
+                        {
+                            to: value => '$' + parseInt(value) + (parseInt(value) >= 100 ? '+' : ''),
+                            from: value => parseInt(value.replace('$', '').replace('+', ''))
+                        }
+                    ],
+                    format: {
+                        to: value => Math.round(value),
+                        from: value => Math.round(value)
+                    }
+                });
+
+                // Update display values when slider changes
+                priceSlider.on('update', function (values, handle) {
+                    const value = parseInt(values[handle]);
+
+                    if (handle === 0) {
+                        // Min price update
+                        minPrice = value;
+                        document.getElementById('min-price-display').textContent = value;
+                    } else {
+                        // Max price update
+                        maxPrice = value;
+                        const maxDisplay = document.getElementById('max-price-display');
+                        maxDisplay.textContent = value;
+
+                        // Handle the plus sign separately
+                        const plusSignSpan = document.getElementById('plus-sign');
+                        if (plusSignSpan) {
+                            plusSignSpan.style.display = (value >= 100) ? 'inline' : 'none';
+                        } else {
+                            // If the plus sign element doesn't exist yet, create it
+                            const parentSpan = maxDisplay.parentElement;
+                            const plusSign = document.createElement('span');
+                            plusSign.id = 'plus-sign';
+                            plusSign.textContent = '+';
+                            plusSign.style.display = (value >= 100) ? 'inline' : 'none';
+                            parentSpan.appendChild(plusSign);
+                        }
+                    }
+                });
+
+                // Apply filters when slider change is complete
+                priceSlider.on('change', applyFilters);
+            }
+
+            // Apply initial filters
+            applyFilters();
+        });
+
+        // Check if we need to restore scroll position
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const scrollPos = urlParams.get('preserve_scroll');
+            if (scrollPos) {
+                window.scrollTo(0, parseInt(scrollPos));
+
+                // Clean up the URL by removing the scroll parameter
+                urlParams.delete('preserve_scroll');
+                const newUrl = window.location.pathname +
+                    (urlParams.toString() ? '?' + urlParams.toString() : '');
+                history.replaceState({}, '', newUrl);
+            }
+        });
+    </script>
+{% endblock %}

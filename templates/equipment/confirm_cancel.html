@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cancel Rental Request{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Confirm Cancellation</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Are you sure you want to cancel your rental request for:
+                    </div>
+                    
+                    <div class="equipment-details mb-4 p-3 border rounded">
+                        <div class="d-flex align-items-center">
+                            {% if rental.equipment.main_image %}
+                            <img src="{{ rental.equipment.main_image.url }}" alt="{{ rental.equipment }}" class="img-thumbnail me-3" style="width: 100px;">
+                            {% else %}
+                            <div class="placeholder-image me-3 bg-light d-flex align-items-center justify-content-center" style="width: 100px; height: 80px;">
+                                <i class="fas fa-image text-secondary"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div>
+                                <h5 class="mb-1">{{ rental.equipment.brand }} {{ rental.equipment.model }}</h5>
+                                <p class="mb-1 text-muted">{{ rental.equipment.get_equipment_type_display }} | {{ rental.equipment.size }}</p>
+                                <div class="rental-dates small">
+                                    <i class="fas fa-calendar me-1"></i> 
+                                    {{ rental.checkout_date|date:"M d, Y" }} - 
+                                    {{ rental.due_date|date:"M d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted">This action cannot be undone. You will need to create a new rental request if you change your mind.</p>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'patron' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Go Back
+                        </a>
+                        
+                        <form method="post" action="{% url 'equipment:cancel_rental' rental.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times-circle me-1"></i> Yes, Cancel This Request
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

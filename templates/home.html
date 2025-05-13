@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load static %}
+    {% load socialaccount %}
+
+{% block title %}SkiRentals - Home{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container text-center">
+            <h1 class="mb-4">Alpine Adventure Awaits</h1>
+            <p class="lead mb-5">Premium ski and snowboard equipment rentals for every skill level.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'equipment:index' %}" class="btn btn-light btn-lg">
+                    Browse Equipment
+                </a>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'account_login' %}" class="btn btn-accent btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In / Sign Up
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    {% if not user.is_authenticated %}
+    <!-- Auth Info Section -->
+    <section class="container text-center my-4">
+        <div class="alert alert-info d-inline-block">
+            <i class="fas fa-info-circle me-2"></i>
+            First time here? Simply sign in with your Google account to automatically create your SkiRentals account!
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Features Section -->
+    <section class="container my-5">
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <i class="fas fa-users fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title">Community Sharing</h3>
+                        <p class="card-text">Our lending community connects equipment owners with borrowers, making premium gear accessible to everyone regardless of budget.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <i class="fas fa-calendar-alt fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title">Flexible Borrowing</h3>
+                        <p class="card-text">Borrow what you need, when you need it. No long-term commitments—perfect for occasional users or those wanting to try before buying.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="card-title">Trust & Safety</h3>
+                        <p class="card-text">Our verification system and equipment inspections ensure that both lenders and borrowers have a safe, reliable experience every time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Equipment Section -->
+    <section class="container my-5">
+        <h2 class="text-center mb-4">Featured Equipment</h2>
+        <div class="row g-4">
+            {% if featured_equipment %}
+                {% for equipment in featured_equipment %}
+                    <div class="col-md-4">
+                        <div class="card equipment-card position-relative">
+                            <span class="equipment-type">{{ equipment.get_equipment_type_display }}</span>
+                            {% if equipment.recommended_skill_level %}
+                                <span class="skill-level">{{ equipment.get_recommended_skill_level_display }}</span>
+                            {% endif %}
+                            
+                            {% if equipment.main_image %}
+                                <img src="{{ equipment.main_image.url }}" class="card-img-top" alt="{{ equipment.brand }} {{ equipment.model }}">
+                            {% else %}
+                                {% with first_image=equipment.images.first %}
+                                    {% if first_image %}
+                                        <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ equipment.brand }} {{ equipment.model }}">
+                                    {% else %}
+                                        <img src="{% static 'images/placeholders/equipment-placeholder.jpg' %}"
+                                                     class="card-img-top"
+                                                     alt="{{ equipment.brand }} {{ equipment.model }}">
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <h5 class="card-title">{{ equipment.brand }} {{ equipment.model }}</h5>
+                                <p class="card-text">Size: {{ equipment.size }}</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-primary">${{ equipment.rental_price }}/day</span>
+                                    <div class="star-rating">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= equipment.average_rating|floatformat:0|add:"0" %}
+                                                <i class="fas fa-star"></i>
+                                            {% elif forloop.counter <= equipment.average_rating|floatformat:1|add:"0.5" %}
+                                                <i class="fas fa-star-half-alt"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-1">{{ equipment.average_rating|floatformat:1 }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'equipment:detail' equipment.id %}" class="btn btn-primary w-100">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center">
+                    <p>No equipment available at this time. Please check back later.</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'equipment:index' %}" class="btn btn-outline-primary btn-lg">View All Equipment</a>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="bg-light py-5 my-5">
+        <div class="container">
+            <h2 class="text-center mb-3">How It Works</h2>
+            <p class="text-center mb-5">Our community platform connects equipment owners with borrowers to make winter sports accessible to everyone</p>
+            
+            <!-- Perspective Tabs -->
+            <ul class="nav nav-pills mb-4 justify-content-center" id="howItWorksTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="borrowers-tab" data-bs-toggle="tab" data-bs-target="#borrowers-tab-pane" type="button" role="tab" aria-controls="borrowers-tab-pane" aria-selected="true">
+                        <i class="fas fa-hand-holding me-2"></i>For Borrowers
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="lenders-tab" data-bs-toggle="tab" data-bs-target="#lenders-tab-pane" type="button" role="tab" aria-controls="lenders-tab-pane" aria-selected="false">
+                        <i class="fas fa-share-alt me-2"></i>For Lenders
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="howItWorksTabContent">
+                <!-- For Borrowers Tab -->
+                <div class="tab-pane fade show active" id="borrowers-tab-pane" role="tabpanel" aria-labelledby="borrowers-tab">
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-search fa-2x"></i>
+                            </div>
+                            <h4>Discover</h4>
+                            <p>Browse our community collection of ski and snowboard equipment from local owners</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-calendar-alt fa-2x"></i>
+                            </div>
+                            <h4>Request</h4>
+                            <p>Select items you need and submit a borrowing request for your dates</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-handshake fa-2x"></i>
+                            </div>
+                            <h4>Connect</h4>
+                            <p>Get approved by the equipment owner and arrange for pickup</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-skiing fa-2x"></i>
+                            </div>
+                            <h4>Enjoy</h4>
+                            <p>Hit the slopes with your borrowed equipment, then return it when you're done</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- For Lenders Tab -->
+                <div class="tab-pane fade" id="lenders-tab-pane" role="tabpanel" aria-labelledby="lenders-tab">
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-accent text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-plus-circle fa-2x text-primary"></i>
+                            </div>
+                            <h4>List Equipment</h4>
+                            <p>Share your unused ski and snowboard gear with the community</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-accent text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-clipboard-check fa-2x text-primary"></i>
+                            </div>
+                            <h4>Review Requests</h4>
+                            <p>Approve or decline borrowing requests from community members</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-accent text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-people-arrows fa-2x text-primary"></i>
+                            </div>
+                            <h4>Coordinate Sharing</h4>
+                            <p>Arrange equipment handoff, returns, and communicate with borrowers</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="rounded-circle bg-accent text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-medal fa-2x text-primary"></i>
+                            </div>
+                            <h4>Build Reputation</h4>
+                            <p>Receive reviews and build your standing in the community</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'help' %}" class="btn btn-outline-primary">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="container my-5">
+        <h2 class="text-center mb-4">Borrower Experiences</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3 star-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="card-text">"Borrowing through SkiRentals saved me so much money! I only ski a few times a year, so owning my own equipment never made sense. The borrowing process was smooth and the equipment was in perfect condition."</p>
+                        <div class="d-flex align-items-center mt-3">
+{#                            <div class="flex-shrink-0">#}
+{#                                <img src="https://via.placeholder.com/50" class="rounded-circle" alt="Borrower">#}
+{#                            </div>#}
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">Sarah Johnson</h6>
+                                <small class="text-muted">Frequent Borrower</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3 star-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <p class="card-text">"As a student, I couldn't afford to buy my own snowboard. SkiRentals' lending system made it possible for me to try different boards and find what works best before committing to a purchase. The reservation system was simple to use!"</p>
+                        <div class="d-flex align-items-center mt-3">
+{#                            <div class="flex-shrink-0">#}
+{#                                <img src="https://via.placeholder.com/50" class="rounded-circle" alt="Borrower">#}
+{#                            </div>#}
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">Michael Chen</h6>
+                                <small class="text-muted">Student Borrower</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3 star-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="card-text">"Our campus library partnered with SkiRentals for our outdoor program, and it's been a game-changer! The lending system makes it easy to track who has what equipment and when it's due back. Our students love the accessibility."</p>
+                        <div class="d-flex align-items-center mt-3">
+{#                            <div class="flex-shrink-0">#}
+{#                                <img src="https://via.placeholder.com/50" class="rounded-circle" alt="Lender">#}
+{#                            </div>#}
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">David Wilson</h6>
+                                <small class="text-muted">Campus Recreation Director</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="bg-primary text-white py-5 my-5">
+        <div class="container text-center">
+            <h2 class="mb-4">Ready for Your Next Adventure?</h2>
+            
+            {% if user.is_authenticated %}
+                <p class="lead mb-4">Browse our collection to find the perfect equipment for your next trip!</p>
+                <a href="{% url 'equipment:index' %}" class="btn btn-accent btn-lg">
+                    <i class="fas fa-skiing me-2"></i>Browse Equipment
+                </a>
+            {% else %}
+                <p class="lead mb-4">Sign up now to get exclusive access to our premium equipment collection.</p>
+                <a href="{% url 'account_login' %}" class="btn btn-accent btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Sign In / Sign Up
+                </a>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

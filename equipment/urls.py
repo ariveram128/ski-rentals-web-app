@@ -1,0 +1,38 @@
+from django.urls import path
+from . import views
+
+app_name = "equipment"
+urlpatterns = [
+    path("add/", views.AddView.as_view(), name="add_equipment"),
+    path("", views.IndexView.as_view(), name="index"),
+    path("<int:pk>/", views.DetailView.as_view(), name="detail"),
+    path("<int:equipment_id>/delete/", views.delete_equipment, name="delete_equipment"),
+    path("<int:equipment_id>/add-images/", views.add_equipment_images, name="add_images"),
+    path("images/<int:image_id>/delete/", views.delete_equipment_image, name="delete_image"),
+    path("cart/add/<int:equipment_id>/", views.add_to_cart, name="add_to_cart"),
+    path("cart/remove/<int:item_id>/", views.remove_from_cart, name="remove_from_cart"),
+    path("cart/clear/", views.clear_cart, name="clear_cart"),
+    path("cart/submit/", views.submit_rental_request, name="submit_rental_request"),
+    path("rentals/manage/", views.ManageRentalsView.as_view(), name="manage_rentals"),
+    path("rentals/approve/<int:rental_id>/", views.approve_rental, name="approve_rental"),
+    path("rentals/reject/<int:rental_id>/", views.reject_rental, name="reject_rental"),
+    path("rentals/complete/<int:rental_id>/", views.complete_rental, name="complete_rental"),
+    path("rentals/cancel/<int:rental_id>/", views.cancel_rental, name="cancel_rental"),
+    path("collections/", views.CollectionListView.as_view(), name="collections"),
+    path("collections/<int:pk>/", views.CollectionDetailView.as_view(), name="collection_detail"),
+    path("collections/create/", views.create_collection, name="create_collection"),
+    path("collections/edit/<int:collection_id>/", views.edit_collection, name="edit_collection"),
+    path("collections/delete/<int:collection_id>/", views.delete_collection, name="delete_collection"),
+    path("collections/add/<int:equipment_id>/", views.add_to_collection, name="add_to_collection"),
+    path("collections/remove/<int:equipment_id>/<int:collection_id>/", views.remove_from_collection, name="remove_from_collection"),
+    path("collections/<int:collection_id>/request-access/", views.request_collection_access, name="request_collection_access"),
+    path("collections/access-requests/", views.list_access_requests, name="list_access_requests"),
+    path("collections/access-requests/<int:request_id>/approve/", views.approve_access_request, name="approve_access_request"),
+    path("collections/access-requests/<int:request_id>/deny/", views.deny_access_request, name="deny_access_request"),
+    path("collections/<int:collection_id>/manage-users/", views.manage_collection_users, name="manage_collection_users"),
+    path("<int:equipment_id>/review/", views.add_review, name="add_review"),
+    path("quick-rent/<int:equipment_id>/", views.quick_rent, name="quick_rent"),
+    path("api/search/", views.search_equipment, name="search_equipment"),
+    path("api/notifications/", views.get_notifications, name="get_notifications"),
+    path("<int:pk>/edit/", views.EditView.as_view(), name="edit_equipment"),
+]

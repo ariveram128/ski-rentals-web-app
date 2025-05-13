@@ -1,0 +1,426 @@
+{% load static %}
+<!DOCTYPE html>
+
+<link rel="shortcut icon" type="image/jpg" href="{% static 'images/favicon.jpg' %}">
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SkiRentals{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts: Montserrat and Open Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    {% load static %}
+    {% load socialaccount %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% if not request.META.SERVER_NAME == 'testserver' %}
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+    {% endif %}
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <i class="fas fa-snowflake me-2"></i>SkiRentals
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'equipment:index' %}">Equipment</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'equipment:collections' %}">Collections</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        {% if user.userprofile.user_type == 'LIBRARIAN' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'librarian' %}">Dashboard</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'patron' %}">My Rentals</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                
+                <div class="d-flex ">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cart' %}" class="btn btn-accent me-2">
+                            <i class="fas fa-shopping-cart"></i>
+                        </a>
+                        {% if not request.META.SERVER_NAME == 'testserver' %}
+                        <!-- Notification button -->
+                        <div class="dropdown me-3">
+                            <button class="btn btn-accent dropdown-toggle" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                <i class="fas fa-bell"></i>
+                                <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">
+                                    <span id="notification-count">0</span>
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notification-menu p-0" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                    <h6 class="mb-0">Notifications</h6>
+                                    <button id="mark-all-read" class="btn btn-sm btn-link text-decoration-none">Mark all read</button>
+                                </div>
+                                <div id="notification-list" class="p-0">
+                                    <div class="text-center p-3 text-muted">
+                                        <small>Loading notifications...</small>
+                                    </div>
+                                </div>
+                                <div class="text-center p-2 border-top">
+                                    <small><button id="view-all-notifications" class="btn btn-link btn-sm text-decoration-none p-0">View all notifications</button></small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.userprofile.profile_picture %}
+                                <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle me-1" style="width: 24px; height: 24px; object-fit: cover;">
+                                {% else %}
+                                <i class="fas fa-user me-1"></i>
+                                {% endif %}
+                                {{ user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}">My Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'edit_profile' %}">Edit Profile</a></li>
+                                {% if user.userprofile.user_type == 'LIBRARIAN' %}
+                                    <li><a class="dropdown-item" href="{% url 'librarian' %}">Dashboard</a></li>
+                                {% else %}
+                                    <li><a class="dropdown-item" href="{% url 'patron' %}">Dashboard</a></li>
+                                {% endif %}
+                                {% if user.is_staff %}
+                                    <li><a class="dropdown-item" href="{% url 'equipment:add_equipment' %}">Add Equipment</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-accent">
+                            <i class="fas fa-sign-in-alt me-1"></i> Sign in / Sign up
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Messages container -->
+        {% if messages %}
+        <div class="container mt-3">
+            {% comment %} Track displayed messages to prevent duplicates {% endcomment %}
+            {% with displayed_messages='' %}
+                {% for message in messages %}
+                    {% if message not in displayed_messages %}
+                        <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert" id="alert-{{ forloop.counter }}">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% with displayed_messages=displayed_messages|add:message %}{% endwith %}
+                    {% endif %}
+                {% endfor %}
+            {% endwith %}
+        </div>
+        <script>
+            // Auto-dismiss alerts after 5 seconds
+            document.addEventListener('DOMContentLoaded', function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert, index) {
+                    setTimeout(function() {
+                        bootstrap.Alert.getOrCreateInstance(alert).close();
+                    }, 5000 + (index * 500)); // Stagger the dismissal
+                });
+            });
+        </script>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>SkiRentals</h5>
+                    <p>Your premier destination for ski and snowboard equipment rentals.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'home' %}" class="text-decoration-none text-light">Home</a></li>
+                        <li><a href="{% url 'equipment:index' %}" class="text-decoration-none text-light">Equipment</a></li>
+                        <li><a href="/help/#faqs" class="text-decoration-none text-light">About Us</a></li>
+                        <li><a href="/help/#contact" class="text-decoration-none text-light">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Connect</h5>
+                    <div class="d-flex gap-2">
+                        <span class="text-light" tabindex="0" role="button" data-bs-toggle="popover" data-bs-trigger="focus"
+                              data-bs-placement="top" data-bs-content="We don't have any social media yet, but stay on the lookout!">
+                            <i class="fab fa-facebook fa-lg"></i>
+                        </span>
+                        <span class="text-light" tabindex="0" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top"
+                              data-bs-content="We don't have any social media yet, but stay on the lookout!">
+                            <i class="fab fa-twitter fa-lg"></i>
+                        </span>
+                        <span class="text-light" tabindex="0" role="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top"
+                              data-bs-content="We don't have any social media yet, but stay on the lookout!">
+                            <i class="fab fa-instagram fa-lg"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 mb-4 border-secondary">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-0">
+                        <small>
+                            This system is a class project for CS 3240 at the University of Virginia. 
+                            This is not a real rental service. Please do not submit real information.
+                        </small>
+                    </p>
+                    <p class="mb-0">
+                        <small>&copy; {% now "Y" %} SkiRentals Team Project</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    {% if user.is_authenticated and not request.META.SERVER_NAME == 'testserver' %}
+    <!-- Notifications JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Track if we're viewing all notifications or just recent ones
+            let viewingAllNotifications = false;
+            let allNotificationsData = null;
+            
+            // Function to fetch notifications
+            function fetchNotifications(viewAll = false) {
+                const url = viewAll 
+                    ? '{% url "equipment:get_notifications" %}?all=true' 
+                    : '{% url "equipment:get_notifications" %}';
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (viewAll) {
+                            allNotificationsData = data;
+                        }
+                        updateNotifications(data);
+                        
+                        // Update the button text based on the count of notifications
+                        const viewAllBtn = document.getElementById('view-all-notifications');
+                        if (data.total_count > data.notifications.length && !viewAll) {
+                            viewAllBtn.innerHTML = `View all notifications (${data.total_count})`;
+                            viewAllBtn.style.display = 'inline';
+                        } else if (viewAll && data.notifications.length > 10) {
+                            viewAllBtn.innerHTML = 'Show fewer notifications';
+                            viewAllBtn.style.display = 'inline';
+                        } else {
+                            viewAllBtn.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notifications:', error);
+                    });
+            }
+            
+            // Function to update notifications UI
+            function updateNotifications(data) {
+                const notificationList = document.getElementById('notification-list');
+                const notificationBadge = document.getElementById('notification-badge');
+                const notificationCount = document.getElementById('notification-count');
+                
+                // Update unread count
+                if (data.unread_count > 0) {
+                    notificationCount.textContent = data.unread_count;
+                    notificationBadge.style.display = 'inline-block';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+                
+                // Clear existing notifications
+                notificationList.innerHTML = '';
+                
+                // Add notifications or show empty message
+                if (data.notifications.length === 0) {
+                    notificationList.innerHTML = `
+                        <div class="text-center p-3 text-muted">
+                            <small>No notifications</small>
+                        </div>
+                    `;
+                } else {
+                    data.notifications.forEach(notification => {
+                        const item = document.createElement('div');
+                        item.className = notification.is_read ? 'notification-item p-3 border-bottom' : 'notification-item p-3 border-bottom bg-light';
+                        
+                        let icon = 'fas fa-info-circle text-primary';
+                        if (notification.type.includes('APPROVED')) {
+                            icon = 'fas fa-check-circle text-success';
+                        } else if (notification.type.includes('DENIED') || notification.type.includes('REJECTED')) {
+                            icon = 'fas fa-times-circle text-danger';
+                        } else if (notification.type.includes('REQUEST')) {
+                            icon = 'fas fa-question-circle text-warning';
+                        }
+                        
+                        item.innerHTML = `
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="${icon} fa-lg"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1">${notification.message}</p>
+                                    <small class="text-muted">${notification.created_at}</small>
+                                </div>
+                                ${!notification.is_read ? `
+                                <div>
+                                    <button class="btn btn-sm btn-link mark-read" data-id="${notification.id}">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>` : ''}
+                            </div>
+                        `;
+                        
+                        notificationList.appendChild(item);
+                        
+                        // Add click handler for the notification
+                        if (notification.url) {
+                            item.style.cursor = 'pointer';
+                            item.addEventListener('click', function(e) {
+                                if (!e.target.closest('.mark-read')) {
+                                    window.location.href = notification.url;
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Add event listeners for mark as read buttons
+                    document.querySelectorAll('.mark-read').forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const notificationId = this.getAttribute('data-id');
+                            markAsRead(notificationId);
+                        });
+                    });
+                }
+            }
+            
+            // Toggle between viewing all notifications and just recent ones
+            document.getElementById('view-all-notifications').addEventListener('click', function() {
+                viewingAllNotifications = !viewingAllNotifications;
+                
+                if (viewingAllNotifications) {
+                    // If we're viewing all now, fetch all notifications
+                    fetchNotifications(true);
+                } else {
+                    // If we're going back to recent, use the standard fetch
+                    fetchNotifications(false);
+                }
+            });
+            
+            // Function to mark a notification as read
+            function markAsRead(notificationId) {
+                const formData = new FormData();
+                formData.append('notification_id', notificationId);
+                
+                fetch('{% url "equipment:get_notifications" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchNotifications(viewingAllNotifications);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking notification as read:', error);
+                });
+            }
+            
+            // Function to mark all notifications as read
+            document.getElementById('mark-all-read').addEventListener('click', function() {
+                fetch('{% url "equipment:get_notifications" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fetchNotifications(viewingAllNotifications);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all notifications as read:', error);
+                });
+            });
+            
+            // Helper function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            
+            // Fetch notifications on page load
+            fetchNotifications();
+            
+            // Fetch notifications every 30 seconds
+            setInterval(() => fetchNotifications(viewingAllNotifications), 30000);
+        });
+    </script>
+    {% endif %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
