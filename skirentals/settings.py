@@ -34,7 +34,10 @@ os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$eh8p018&m8)r0m$6obyl_v0^es%3oe70^d#awiu@zea=-&c)%')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    # Fallback to a default secret key for testing only
+    SECRET_KEY = 'django-insecure-$eh8p018&m8)r0m$6obyl_v0^es%3oe70^d#awiu@zea=-&c)%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 IS_HEROKU_APP = "DYNO" in os.environ and "CI" not in os.environ
