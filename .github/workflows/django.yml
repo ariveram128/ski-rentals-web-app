@@ -12,7 +12,7 @@ jobs:
     env:
       GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
       GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-key-for-testing-only' }}
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       DATABASE_URL: postgres://django:password@localhost:5432/test_db
       USE_S3: 'False'
       DEBUG: 'True'
@@ -45,6 +45,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Create .env file
+        run: |
+          echo "GOOGLE_OAUTH_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID || '123456789-example.apps.googleusercontent.com' }}" > .env
+          echo "GOOGLE_OAUTH_CLIENT_SECRET=${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET || 'dummy-secret' }}" >> .env
+          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY || 'django-insecure-key-for-testing-only' }}" >> .env
+          echo "DEBUG=True" >> .env
+          echo "USE_S3=False" >> .env
       - name: Run Migrations
         run: |
           python manage.py migrate
