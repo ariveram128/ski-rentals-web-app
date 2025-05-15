@@ -147,7 +147,7 @@
                         {% if user.is_authenticated %}
                             <a href="#" data-bs-toggle="modal" data-bs-target="#createCollectionModal">Create your first collection</a>.
                         {% else %}
-                            <a href="{% url 'login' %}">Log in</a> to create your own collections.
+                            <a href="{% url 'account_login' %}">Log in</a> to create your own collections.
                         {% endif %}
                     </div>
                 </div>
