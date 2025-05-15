@@ -9,10 +9,10 @@ from pathlib import Path
 load_dotenv()
 
 GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
-if not GOOGLE_OAUTH_CLIENT_ID:
+if not GOOGLE_OAUTH_CLIENT_ID and "CI" not in os.environ:
     raise ValueError(
-        'GOOGLE_OAUTH_CLIENT_ID is missing.'
-        'Have you put it in a file at mysite/.env ?'
+        'GOOGLE_OAUTH_CLIENT_ID is missing. '
+        'Have you set it as an environment variable or in a .env file?'
     )
 
 # sign in popup
@@ -34,11 +34,11 @@ os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$eh8p018&m8)r0m$6obyl_v0^es%3oe70^d#awiu@zea=-&c)%'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$eh8p018&m8)r0m$6obyl_v0^es%3oe70^d#awiu@zea=-&c)%')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 IS_HEROKU_APP = "DYNO" in os.environ and "CI" not in os.environ
-DEBUG = True if not IS_HEROKU_APP else False
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 if IS_HEROKU_APP:
 
