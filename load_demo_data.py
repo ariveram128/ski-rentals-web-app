@@ -73,10 +73,8 @@ def create_demo_equipment():
             brand = random.choice(brands)
             model_name = f"{eq_type.capitalize()} Pro {random.randint(100, 999)}"
             
-            if eq_type in ['SKI', 'SNOWBOARD', 'POLES', 'BOOTS']:
-                skill_level = random.choice(skill_levels)
-            else:
-                skill_level = None
+            # Set skill level for all equipment types
+            skill_level = random.choice(skill_levels)
                 
             if eq_type in ['JACKET', 'PANTS', 'GLOVES']:
                 size = random.choice(sizes)
