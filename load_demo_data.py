@@ -33,7 +33,7 @@ def create_demo_equipment():
     
     # Equipment types and their subtypes
     equipment_types = {
-        'SKI': ['ALPINE', 'NORDIC', 'FREESTYLE', 'TOURING', 'POWDER'],
+        'SKI': ['POWDER', 'ALL_MOUNTAIN', 'FREESTYLE', 'FREERIDE', 'TOURING'],
         'SNOWBOARD': [],
         'POLES': [],
         'BOOTS': [],
@@ -69,8 +69,9 @@ def create_demo_equipment():
             else:
                 subtype = None
             
-            # Generate equipment name
+            # Generate equipment name and model
             brand = random.choice(brands)
+            model_name = f"{eq_type.capitalize()} Pro {random.randint(100, 999)}"
             
             if eq_type in ['SKI', 'SNOWBOARD', 'POLES', 'BOOTS']:
                 skill_level = random.choice(skill_levels)
@@ -79,51 +80,49 @@ def create_demo_equipment():
                 
             if eq_type in ['JACKET', 'PANTS', 'GLOVES']:
                 size = random.choice(sizes)
+            elif eq_type in ['SKI', 'SNOWBOARD']:
+                # Length in cm
+                size = str(random.randint(140, 190))
+            elif eq_type == 'BOOTS':
+                # Mondopoint
+                size = str(random.randint(22, 30)) + ".5"
+            elif eq_type == 'POLES':
+                size = str(random.randint(100, 140))
             else:
-                size = None
-            
-            name = f"{brand} {eq_type.title()}"
-            if subtype:
-                name += f" {subtype.title()}"
-            if skill_level:
-                name += f" {skill_level.title()}"
-            if size:
-                name += f" ({size})"
+                size = random.choice(['S', 'M', 'L', 'XL'])
             
             # Set appropriate pricing
             if eq_type in ['SKI', 'SNOWBOARD']:
-                daily_rate = random.randint(40, 80)
-                weekly_rate = daily_rate * 6
-                monthly_rate = weekly_rate * 3.5
+                rental_price = random.randint(40, 80)
+                weekly_rate = rental_price * 5
+                seasonal_rate = weekly_rate * 4
             elif eq_type in ['BOOTS', 'HELMET']:
-                daily_rate = random.randint(15, 30)
-                weekly_rate = daily_rate * 6
-                monthly_rate = weekly_rate * 3.5
+                rental_price = random.randint(15, 30)
+                weekly_rate = rental_price * 5
+                seasonal_rate = weekly_rate * 4
             else:
-                daily_rate = random.randint(5, 15)
-                weekly_rate = daily_rate * 6
-                monthly_rate = weekly_rate * 3.5
+                rental_price = random.randint(5, 15)
+                weekly_rate = rental_price * 5
+                seasonal_rate = weekly_rate * 4
             
             # Create equipment
             equipment = Equipment.objects.create(
                 equipment_id=f"{eq_type[0:2]}{i:03d}",
-                name=name,
-                description=f"High-quality {eq_type.lower()} for {skill_level.lower() if skill_level else 'all'} level skiers and snowboarders.",
                 equipment_type=eq_type,
                 equipment_subtype=subtype,
-                skill_level=skill_level,
-                size=size,
                 brand=brand,
-                daily_rate=daily_rate,
-                weekly_rate=weekly_rate,
-                monthly_rate=monthly_rate,
+                model=model_name,
+                size=size,
                 condition="EXCELLENT",
-                available=True,
-                acquired_date=timezone.now() - timedelta(days=random.randint(30, 365)),
+                is_available=True,
+                recommended_skill_level=skill_level,
+                rental_price=rental_price,
+                weekly_rate=weekly_rate,
+                seasonal_rate=seasonal_rate
             )
             
             equipment_created += 1
-            print(f"Created: {equipment.name} (ID: {equipment.equipment_id})")
+            print(f"Created: {equipment.brand} {equipment.model} (ID: {equipment.equipment_id})")
     
     print(f"Total equipment created: {equipment_created}")
     
